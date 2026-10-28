@@ -128,7 +128,7 @@ export default function AdminDashboard() {
                   </div>
                 </div>
               ))
-            }
+            )}
           </div>
         </div>
 
@@ -157,7 +157,7 @@ export default function AdminDashboard() {
                   </div>
                 </div>
               ))
-            }
+            )}
           </div>
         </div>
       </div>
