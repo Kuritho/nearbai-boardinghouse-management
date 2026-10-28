@@ -2,9 +2,8 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Users, DoorOpen, Wallet, AlertTriangle, TrendingUp, ArrowRight,
-  Receipt, Home, Clock, Zap, CheckCircle2, DollarSign
+  Receipt, Home, Clock, Zap, DollarSign
 } from 'lucide-react';
-import { motion } from 'framer-motion';
 import StatCard from '../../components/StatCard';
 import StatusBadge from '../../components/StatusBadge';
 import { analytics, houses } from '../../services/localDB';
@@ -129,7 +128,7 @@ export default function AdminDashboard() {
                   </div>
                 </div>
               ))
-            )}
+            }
           </div>
         </div>
 
@@ -158,7 +157,7 @@ export default function AdminDashboard() {
                   </div>
                 </div>
               ))
-            )}
+            }
           </div>
         </div>
       </div>

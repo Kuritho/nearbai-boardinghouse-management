@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react';
 import {
   Plus, Users, Search, Trash2, Phone, Home, CheckCircle2,
-  ArrowRight, UserPlus, ListChecks, XCircle
+  ArrowRight, UserPlus, ListChecks
 } from 'lucide-react';
 import Modal from '../../components/Modal';
-import StatusBadge from '../../components/StatusBadge';
 import { useToast } from '../../components/Toast';
 import { tenants, rooms, houses, reservations } from '../../services/localDB';
 

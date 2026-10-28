@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, Wallet, Search, CheckCircle2, Home, Users } from 'lucide-react';
+import { Plus, Wallet, Search, CheckCircle2, Users } from 'lucide-react';
 import Modal from '../../components/Modal';
 import StatusBadge from '../../components/StatusBadge';
 import { useToast } from '../../components/Toast';
