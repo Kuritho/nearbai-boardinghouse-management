@@ -2,7 +2,8 @@ import { NavLink } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
   LayoutDashboard, Building2, DoorOpen, Users, Wallet, Receipt,
-  TrendingUp, LogOut, Settings, Wrench, Shield, Clock, Megaphone, Heart
+  TrendingUp, LogOut, Settings, Wrench, Shield, Clock, Megaphone,
+  Heart, FileSpreadsheet, MessageSquare, // (kept even if unused, safe)
 } from 'lucide-react';
 import Logo from './Logo';
 import PropertySwitcher from './PropertySwitcher';
@@ -21,6 +22,7 @@ export default function Sidebar() {
     { to: '/admin/utilities', icon: Receipt, label: 'Utility Charges' },
     { to: '/admin/expenses', icon: Wrench, label: 'Expenses' },
     { to: '/admin/analytics', icon: TrendingUp, label: 'Analytics' },
+    { to: '/admin/reports', icon: FileSpreadsheet, label: 'Reports & Exports' }, // <-- NEW
     { to: '/admin/announcements', icon: Megaphone, label: 'Announcements' },
     { to: '/admin/settings', icon: Settings, label: 'Payment Settings' },
     { to: '/admin/users', icon: Shield, label: 'Manage Users' },
