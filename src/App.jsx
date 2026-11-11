@@ -25,6 +25,7 @@ import RentPayments from './pages/admin/RentPayments';
 import UtilityCharges from './pages/admin/UtilityCharges';
 import Expenses from './pages/admin/Expenses';
 import Analytics from './pages/admin/Analytics';
+import Reports from './pages/admin/Reports'; // <-- NEW
 import PaymentSettings from './pages/admin/PaymentSettings';
 import ManageUsers from './pages/admin/ManageUsers';
 import Announcements from './pages/admin/Announcements';
@@ -49,6 +50,7 @@ const PAGE_IMPORTS = {
   SignupPage, ReservePage, ReserveSuccess,
   AdminDashboard, ManageProperties, ManageRooms, ManageTenants,
   Reservations, RentPayments, UtilityCharges, Expenses, Analytics,
+  Reports, // <-- NEW
   PaymentSettings, ManageUsers, Announcements,
   CaretakerDashboard,
   TenantDashboard, PayBill, PaymentPending, Receipt,
@@ -191,6 +193,7 @@ function AppRoutes() {
       <Route path="/admin/utilities" element={<Safe component={UtilityCharges} name="UtilityCharges" role="admin" />} />
       <Route path="/admin/expenses" element={<Safe component={Expenses} name="Expenses" role="admin" />} />
       <Route path="/admin/analytics" element={<Safe component={Analytics} name="Analytics" role="admin" />} />
+      <Route path="/admin/reports" element={<Safe component={Reports} name="Reports" role="admin" />} />
       <Route path="/admin/announcements" element={<Safe component={Announcements} name="Announcements" role="admin" />} />
       <Route path="/admin/settings" element={<Safe component={PaymentSettings} name="PaymentSettings" role="admin" />} />
       <Route path="/admin/users" element={<Safe component={ManageUsers} name="ManageUsers" role="admin" />} />
