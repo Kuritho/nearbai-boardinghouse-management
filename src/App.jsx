@@ -17,6 +17,7 @@ import ReserveSuccess from './pages/public/ReserveSuccess';
 
 // ─── Admin pages ───
 import AdminDashboard from './pages/admin/AdminDashboard';
+import GlobalDashboard from './pages/admin/GlobalDashboard'; // <-- NEW
 import ManageProperties from './pages/admin/ManageProperties';
 import ManageRooms from './pages/admin/ManageRooms';
 import ManageTenants from './pages/admin/ManageTenants';
@@ -25,7 +26,7 @@ import RentPayments from './pages/admin/RentPayments';
 import UtilityCharges from './pages/admin/UtilityCharges';
 import Expenses from './pages/admin/Expenses';
 import Analytics from './pages/admin/Analytics';
-import Reports from './pages/admin/Reports'; // <-- NEW
+import Reports from './pages/admin/Reports';
 import PaymentSettings from './pages/admin/PaymentSettings';
 import ManageUsers from './pages/admin/ManageUsers';
 import Announcements from './pages/admin/Announcements';
@@ -48,9 +49,10 @@ const PAGE_IMPORTS = {
   Login,
   LandingPage, BrowsePage, PropertyDetail, AboutPage, ContactPage,
   SignupPage, ReservePage, ReserveSuccess,
-  AdminDashboard, ManageProperties, ManageRooms, ManageTenants,
+  AdminDashboard, GlobalDashboard, // <-- NEW
+  ManageProperties, ManageRooms, ManageTenants,
   Reservations, RentPayments, UtilityCharges, Expenses, Analytics,
-  Reports, // <-- NEW
+  Reports,
   PaymentSettings, ManageUsers, Announcements,
   CaretakerDashboard,
   TenantDashboard, PayBill, PaymentPending, Receipt,
@@ -185,6 +187,7 @@ function AppRoutes() {
 
       {/* ============ ADMIN ============ */}
       <Route path="/admin" element={<Safe component={AdminDashboard} name="AdminDashboard" role="admin" />} />
+      <Route path="/admin/global" element={<Safe component={GlobalDashboard} name="GlobalDashboard" role="admin" />} /> {/* NEW */}
       <Route path="/admin/properties" element={<Safe component={ManageProperties} name="ManageProperties" role="admin" />} />
       <Route path="/admin/rooms" element={<Safe component={ManageRooms} name="ManageRooms" role="admin" />} />
       <Route path="/admin/tenants" element={<Safe component={ManageTenants} name="ManageTenants" role="admin" />} />

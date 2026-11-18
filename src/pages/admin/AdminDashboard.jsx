@@ -2,11 +2,14 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Users, DoorOpen, Wallet, AlertTriangle, TrendingUp, ArrowRight,
-  Receipt, Home, Clock, Zap, DollarSign
+  Receipt, Home, Clock, Zap, CheckCircle2, DollarSign,
+  Database, RefreshCw
 } from 'lucide-react';
+import { motion } from 'framer-motion';
 import StatCard from '../../components/StatCard';
 import StatusBadge from '../../components/StatusBadge';
 import { analytics, houses } from '../../services/localDB';
+import { seedDemoData, wipeAllData } from '../../services/seedData';
 
 export default function AdminDashboard() {
   const [data, setData] = useState(null);
@@ -31,6 +34,62 @@ export default function AdminDashboard() {
         <p className="text-slate-600 text-sm mt-1 flex items-center gap-1.5">
           <Home size={13} /> {house?.name || 'No property'}
         </p>
+      </div>
+
+      {/* ── DEMO DATA TOOLS ── */}
+      <div className="mb-6 p-4 rounded-2xl bg-gradient-to-r from-violet-50 to-fuchsia-50 border-2 border-dashed border-violet-300">
+        <div className="flex items-center justify-between flex-wrap gap-3">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-violet-100 flex items-center justify-center">
+              <Database size={18} className="text-violet-600" />
+            </div>
+            {/* <div>
+              <p className="font-bold text-slate-900 text-sm">Demo Data Tools</p>
+              <p className="text-xs text-slate-600">Populate with 3 branches + ~90 tenants, or wipe everything.</p>
+            </div> */}
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={() => {
+                if (window.confirm('This will REPLACE all current data with 3 branches, ~90 tenants, rent payments, utilities, expenses, and announcements. Continue?')) {
+                  try {
+                    const result = seedDemoData();
+                    alert(
+                      `✅ Demo data loaded!\n\n` +
+                      `Branches: ${result.branches}\n` +
+                      `Rooms: ${result.rooms}\n` +
+                      `Tenants: ${result.tenants}\n` +
+                      `Rent records: ${result.rentRecords}\n` +
+                      `Utility records: ${result.utilityRecords}\n` +
+                      `Expenses: ${result.expenses}\n` +
+                      `Announcements: ${result.announcements}\n` +
+                      `Reservations: ${result.reservations}\n\n` +
+                      `Page will reload.`
+                    );
+                    window.location.reload();
+                  } catch (err) {
+                    alert('❌ Error: ' + err.message);
+                  }
+                }
+              }}
+              className="btn-primary !px-4 !py-2 !min-h-0 text-xs"
+            >
+              <Database size={14} className="mr-1.5" /> Load All Data
+            </button>
+            {/* <button
+              onClick={() => {
+                if (window.confirm('⚠️ This will DELETE ALL data including the admin account. The admin will be re-seeded on next login. Continue?')) {
+                  wipeAllData();
+                  alert('All data wiped. Reloading…');
+                  window.location.href = '/login';
+                }
+              }}
+              className="btn-secondary !px-4 !py-2 !min-h-0 text-xs"
+            >
+              <RefreshCw size={14} className="mr-1.5" /> Wipe All
+            </button> */}
+          </div>
+        </div>
       </div>
 
       {/* Pending Reservations Alert */}

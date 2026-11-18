@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import {
   LayoutDashboard, Building2, DoorOpen, Users, Wallet, Receipt,
   TrendingUp, LogOut, Settings, Wrench, Shield, Clock, Megaphone,
-  Heart, FileSpreadsheet, MessageSquare, // (kept even if unused, safe)
+  Heart, FileSpreadsheet, Layers, // <-- Layers added
 } from 'lucide-react';
 import Logo from './Logo';
 import PropertySwitcher from './PropertySwitcher';
@@ -14,6 +14,7 @@ export default function Sidebar() {
 
   const adminLinks = [
     { to: '/admin', icon: LayoutDashboard, label: 'Dashboard', end: true },
+    { to: '/admin/global', icon: Layers, label: 'All Branches' }, // <-- NEW
     { to: '/admin/properties', icon: Building2, label: 'Properties' },
     { to: '/admin/rooms', icon: DoorOpen, label: 'Rooms' },
     { to: '/admin/tenants', icon: Users, label: 'Tenants' },
@@ -22,7 +23,7 @@ export default function Sidebar() {
     { to: '/admin/utilities', icon: Receipt, label: 'Utility Charges' },
     { to: '/admin/expenses', icon: Wrench, label: 'Expenses' },
     { to: '/admin/analytics', icon: TrendingUp, label: 'Analytics' },
-    { to: '/admin/reports', icon: FileSpreadsheet, label: 'Reports & Exports' }, // <-- NEW
+    { to: '/admin/reports', icon: FileSpreadsheet, label: 'Reports & Exports' },
     { to: '/admin/announcements', icon: Megaphone, label: 'Announcements' },
     { to: '/admin/settings', icon: Settings, label: 'Payment Settings' },
     { to: '/admin/users', icon: Shield, label: 'Manage Users' },

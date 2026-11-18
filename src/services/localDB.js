@@ -175,8 +175,6 @@ export const tenants = {
         return { ...t, room: room ? { id: room.id, number: room.roomNumber } : null };
       });
   },
-  
-  // List only those who are reserved and waiting for check-in
   listPending(houseId) {
     const allRooms = read(KEYS.ROOMS);
     return read(KEYS.TENANTS)
@@ -187,13 +185,11 @@ export const tenants = {
         return { ...t, room: room ? { id: room.id, number: room.roomNumber } : null };
       });
   },
-
   create({ name, email, password, phone, emergencyContact, roomId, moveInDate }) {
     const users = read(KEYS.USERS);
     if (users.find((u) => u.email.toLowerCase() === email.toLowerCase())) {
       throw new Error('Email already in use');
     }
-    
     let status = 'reserved';
     if (roomId) {
       const room = read(KEYS.ROOMS).find((r) => r.id === roomId);
@@ -206,41 +202,18 @@ export const tenants = {
     }
 
     const boarder = {
-      id: uid(),
-      name,
-      email,
-      password,
-      role: 'tenant',
-      houseIds: roomId
-        ? [read(KEYS.ROOMS).find((r) => r.id === roomId)?.houseId].filter(Boolean)
-        : [],
-      phone: phone || '',
-      emergencyContact: emergencyContact || '',
-      roomId: roomId || null,
-      moveInDate: moveInDate || new Date().toISOString().split('T')[0],
-      status: status,
+      id: uid(), name, email, password, role: 'tenant',
+      houseIds: roomId ? [read(KEYS.ROOMS).find((r) => r.id === roomId)?.houseId].filter(Boolean) : [],
+      phone: phone || '', emergencyContact: emergencyContact || '', roomId: roomId || null,
+      moveInDate: moveInDate || new Date().toISOString().split('T')[0], status: status,
       createdAt: new Date().toISOString(),
     };
-    users.push(boarder);
-    write(KEYS.USERS, users);
-
+    users.push(boarder); write(KEYS.USERS, users);
     const allTenants = read(KEYS.TENANTS);
-    allTenants.push({
-      id: boarder.id,
-      name,
-      email,
-      phone: phone || '',
-      emergencyContact: emergencyContact || '',
-      roomId: roomId || null,
-      moveInDate: boarder.moveInDate,
-      status: boarder.status,
-      createdAt: boarder.createdAt,
-    });
+    allTenants.push({ id: boarder.id, name, email, phone: phone || '', emergencyContact: emergencyContact || '', roomId: roomId || null, moveInDate: boarder.moveInDate, status: boarder.status, createdAt: boarder.createdAt });
     write(KEYS.TENANTS, allTenants);
     return boarder;
   },
-
-  // Officially check in a reserved tenant to their room
   checkIn(id, roomId) {
     const allTenants = read(KEYS.TENANTS);
     const allUsers = read(KEYS.USERS);
@@ -268,7 +241,6 @@ export const tenants = {
     }
     return tenant;
   },
-
   remove(id) {
     write(KEYS.USERS, read(KEYS.USERS).filter((u) => u.id !== id));
     write(KEYS.TENANTS, read(KEYS.TENANTS).filter((t) => t.id !== id));
@@ -339,17 +311,7 @@ export const rentPayments = {
       }
 
       const payment = {
-        id: uid(), 
-        tenantId: t.id, 
-        billingMonth,
-        dueDate,
-        amountDue: splitAmount, 
-        amountPaid: 0,
-        paymentMethod: null, 
-        orNumber: '', 
-        notes: `Auto-split for Room ${room.roomNumber} (${occupants.length} tenants)`,
-        createdAt: new Date().toISOString(), 
-        paidAt: null
+        id: uid(), tenantId: t.id, billingMonth, dueDate, amountDue: splitAmount, amountPaid: 0, paymentMethod: null, orNumber: '', notes: `Auto-split for Room ${room.roomNumber} (${occupants.length} tenants)`, createdAt: new Date().toISOString(), paidAt: null
       };
       allPayments.push(payment);
       created.push(payment);
@@ -517,8 +479,6 @@ export const reservations = {
     all[idx].status = 'rejected'; all[idx].rejectionReason = reason || 'No reason provided'; all[idx].processedAt = new Date().toISOString();
     write(KEYS.RESERVATIONS, all); return all[idx];
   },
-  
-  // NEW: Mark reservation as fully checked-in
   checkIn(id) {
     const all = read(KEYS.RESERVATIONS);
     const idx = all.findIndex((r) => r.id === id);
@@ -528,7 +488,6 @@ export const reservations = {
       write(KEYS.RESERVATIONS, all);
       return all[idx];
     }
-    
     const allBk = read(KEYS.BOOKINGS);
     const idxBk = allBk.findIndex((b) => b.id === id);
     if (idxBk >= 0) {
@@ -537,10 +496,8 @@ export const reservations = {
       write(KEYS.BOOKINGS, allBk);
       return allBk[idxBk];
     }
-    
     throw new Error('Reservation not found');
   },
-
   getByReference(ref) { return read(KEYS.RESERVATIONS).find((r) => r.reference === ref) || null; },
 };
 
@@ -641,7 +598,7 @@ export const favorites = {
   },
 };
 
-// ================= ANALYTICS =================
+// ================= ANALYTICS (SINGLE BRANCH) =================
 export const analytics = {
   dashboard(houseId) {
     const allRooms = rooms.list(houseId);
@@ -691,6 +648,198 @@ export const analytics = {
       overdueList,
       pendingReservations: pendingRes,
       recentRent: rents.slice(0, 5),
+    };
+  },
+};
+
+// ================= GLOBAL (ALL BRANCHES) EXPORT HELPERS =================
+export const globalData = {
+  getAll() {
+    const allHouses = read(KEYS.HOUSES);
+    const allRooms = read(KEYS.ROOMS);
+    const allTenants = read(KEYS.TENANTS);
+    const allRents = read(KEYS.RENT_PAYMENTS);
+    const allUtils = read(KEYS.UTILITY_CHARGES);
+    const allExpenses = read(KEYS.EXPENSES);
+    const allReservations = read(KEYS.RESERVATIONS);
+    const allBookings = read(KEYS.BOOKINGS);
+
+    const houseById = {};
+    allHouses.forEach(h => { houseById[h.id] = h; });
+
+    const roomById = {};
+    allRooms.forEach(r => { roomById[r.id] = r; });
+
+    const tenantById = {};
+    allTenants.forEach(t => { tenantById[t.id] = t; });
+
+    const branchOfRoom = (roomId) => {
+      const room = roomById[roomId];
+      const house = room ? houseById[room.houseId] : null;
+      return house ? house.name : '—';
+    };
+
+    const rents = allRents.map(p => {
+      const tenant = tenantById[p.tenantId];
+      const room = tenant?.roomId ? roomById[tenant.roomId] : null;
+      const balance = Math.max(0, p.amountDue - p.amountPaid);
+      let status = 'unpaid';
+      if (p.amountPaid >= p.amountDue) status = 'paid';
+      else if (p.dueDate && new Date(p.dueDate) < new Date() && p.amountPaid < p.amountDue) status = 'overdue';
+      else if (p.amountPaid > 0) status = 'partial';
+
+      return {
+        ...p,
+        status,
+        balance,
+        tenantName: tenant?.name || 'Unknown',
+        roomNumber: room?.roomNumber || '—',
+        branch: branchOfRoom(room?.id),
+        houseId: room?.houseId || null,
+      };
+    });
+
+    const utils = allUtils.map(c => {
+      const tenant = tenantById[c.tenantId];
+      const room = tenant?.roomId ? roomById[tenant.roomId] : null;
+      return {
+        ...c,
+        tenantName: tenant?.name || 'Unknown',
+        roomNumber: room?.roomNumber || '—',
+        branch: branchOfRoom(room?.id),
+        houseId: room?.houseId || null,
+      };
+    });
+
+    const expenses = allExpenses.map(e => ({
+      ...e,
+      branch: houseById[e.houseId]?.name || '—',
+    }));
+
+    const tenants = allTenants.map(t => {
+      const room = t.roomId ? roomById[t.roomId] : null;
+      return {
+        ...t,
+        roomNumber: room?.roomNumber || '—',
+        branch: branchOfRoom(t.roomId),
+      };
+    });
+
+    const reservations = allReservations.map(r => {
+      const room = r.roomId ? roomById[r.roomId] : null;
+      return {
+        ...r,
+        roomNumber: room?.roomNumber || '—',
+        branch: branchOfRoom(r.roomId),
+      };
+    });
+
+    return { rents, utils, expenses, tenants, reservations };
+  },
+};
+
+// ================= GLOBAL ANALYTICS (ALL BRANCHES DASHBOARD) =================
+export const globalAnalytics = {
+  dashboard() {
+    const allHouses = read(KEYS.HOUSES);
+    const allRooms = read(KEYS.ROOMS);
+    const allTenants = read(KEYS.TENANTS);
+    const allRents = read(KEYS.RENT_PAYMENTS);
+    const allUtils = read(KEYS.UTILITY_CHARGES);
+    const allExpenses = read(KEYS.EXPENSES);
+    const allReservations = read(KEYS.RESERVATIONS);
+    const allBookings = read(KEYS.BOOKINGS);
+
+    // Index lookups
+    const roomById = {};
+    allRooms.forEach((r) => { roomById[r.id] = r; });
+
+    const tenantById = {};
+    allTenants.forEach((t) => { tenantById[t.id] = t; });
+
+    // Compute per-branch stats
+    const branchStats = allHouses.map((house) => {
+      const houseRooms = allRooms.filter((r) => r.houseId === house.id);
+      const houseRoomIds = new Set(houseRooms.map((r) => r.id));
+
+      // Tenants in this branch (occupied only for occupancy math)
+      const houseTenants = allTenants.filter(
+        (t) => t.roomId && houseRoomIds.has(t.roomId)
+      );
+      const occupiedTenants = houseTenants.filter((t) => t.status === 'occupied');
+
+      const totalBeds = houseRooms.reduce((s, r) => s + (r.bedCapacity || 0), 0);
+      const occupancyRate =
+        totalBeds > 0 ? Math.round((occupiedTenants.length / totalBeds) * 100) : 0;
+
+      // Rent for this branch
+      const houseRents = allRents.filter((p) => {
+        const tenant = tenantById[p.tenantId];
+        return tenant?.roomId && houseRoomIds.has(tenant.roomId);
+      });
+      const rentPaid = houseRents.reduce((s, p) => s + (p.amountPaid || 0), 0);
+
+      // Utilities for this branch
+      const houseUtils = allUtils.filter((c) => {
+        const tenant = tenantById[c.tenantId];
+        return tenant?.roomId && houseRoomIds.has(tenant.roomId);
+      });
+      const utilPaid = houseUtils.reduce(
+        (s, c) => s + (c.status === 'paid' ? c.amountBilled || 0 : 0),
+        0
+      );
+
+      // Expenses for this branch
+      const houseExpenses = allExpenses.filter((e) => e.houseId === house.id);
+      const expensesTotal = houseExpenses.reduce((s, e) => s + (e.amount || 0), 0);
+
+      const collections = rentPaid + utilPaid;
+      const netIncome = collections - expensesTotal;
+
+      return {
+        id: house.id,
+        name: house.name,
+        city: house.city || house.address || '—',
+        tenants: occupiedTenants.length,
+        totalBeds,
+        occupancyRate,
+        collections,
+        expenses: expensesTotal,
+        netIncome,
+      };
+    });
+
+    // Sort by net income descending (leaderboard)
+    branchStats.sort((a, b) => b.netIncome - a.netIncome);
+
+    // Global totals
+    const totalProperties = allHouses.length;
+    const totalRooms = allRooms.length;
+    const totalTenants = allTenants.filter((t) => t.status === 'occupied').length;
+
+    const totalBedsAll = allRooms.reduce((s, r) => s + (r.bedCapacity || 0), 0);
+    const overallOccupancy =
+      totalBedsAll > 0 ? Math.round((totalTenants / totalBedsAll) * 100) : 0;
+
+    const totalCollections = branchStats.reduce((s, b) => s + b.collections, 0);
+    const totalExpenses = branchStats.reduce((s, b) => s + b.expenses, 0);
+    const totalNetIncome = totalCollections - totalExpenses;
+
+    // Pending reservations across all branches (guest + booking types)
+    const pendingReservations = allReservations.filter((r) => r.status === 'pending').length;
+    const pendingBookings = allBookings.filter((b) => b.status === 'pending').length;
+    const totalPendingReservations = pendingReservations + pendingBookings;
+
+    return {
+      totalProperties,
+      totalRooms,
+      totalTenants,
+      overallOccupancy,
+      totalCollections,
+      totalExpenses,
+      totalNetIncome,
+      totalPendingReservations,
+      branchStats,
     };
   },
 };
