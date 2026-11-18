@@ -1,11 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Megaphone, Clock, AlertCircle, Info } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { useAuth } from '../../context/AuthContext';
 import { announcements, houses } from '../../services/localDB';
 
 export default function TenantAnnouncements() {
-  const { user } = useAuth();
   const [list, setList] = useState([]);
   const [loading, setLoading] = useState(true);
 

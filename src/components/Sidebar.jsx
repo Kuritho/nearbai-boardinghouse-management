@@ -2,7 +2,7 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, Building2, DoorOpen, Users, CalendarClock,
   Wallet, Zap, Receipt, BarChart3, FileText, Settings, Megaphone,
-  LogOut, UserCog, Shield, Heart, MessageSquare, Database // <-- Added Database
+  LogOut, Shield, Heart, MessageSquare, Database
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 

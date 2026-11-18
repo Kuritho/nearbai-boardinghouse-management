@@ -1,8 +1,7 @@
 import { useState, useMemo } from 'react';
 import { 
   Download, Calendar, Wallet, Receipt, Users, Home, 
-  Zap, FileSpreadsheet, Clock, FileArchive, Building2, Layers, AlertCircle,
-  Database // <-- Added for the new dataset button
+  Zap, FileArchive, Building2, Layers, AlertCircle, Database
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { 
@@ -36,7 +35,6 @@ export default function Reports() {
   }, [house, scope]);
 
   const filterByDate = (list, dateField) => {
-    const now = new Date('2026-11-30'); 
     let start = new Date('2026-11-01'); 
     let end = new Date('2026-11-30');
 
@@ -140,7 +138,6 @@ export default function Reports() {
   const handleExportOverdue = () => exportToCSV(`overdue-tenants-${scopeLabel}-${range}`, fmtOverdue());
   const handleExportUtils = () => exportToCSV(`utility-charges-${scopeLabel}-${range}`, fmtUtils());
   const handleExportExpenses = () => exportToCSV(`expenses-${scopeLabel}-${range}`, fmtExpenses());
-  const handleExportTenants = () => exportToCSV(`tenants-${scopeLabel}-${range}`, fmtTenants());
   const handleExportReservations = () => exportToCSV(`reservations-${scopeLabel}-${range}`, fmtReservations());
 
   const handleExportAll = () => {

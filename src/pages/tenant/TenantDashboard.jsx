@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Wallet, Calendar, ArrowRight, Home, Receipt, Clock,
-  CheckCircle2, XCircle, UserCheck, MessageSquare
+  XCircle, UserCheck, MessageSquare
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import StatusBadge from '../../components/StatusBadge';

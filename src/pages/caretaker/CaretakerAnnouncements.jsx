@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Megaphone, Plus, Trash2, Loader2, AlertCircle, Info } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import Modal from '../../components/Modal';
 import { useToast } from '../../components/Toast';
 import { announcements, houses } from '../../services/localDB';

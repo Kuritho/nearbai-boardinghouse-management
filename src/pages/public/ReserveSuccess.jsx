@@ -1,10 +1,9 @@
-import { useParams, useNavigate, Link } from 'react-router-dom';
-import { CheckCircle2, Clock, ArrowRight, UserCheck } from 'lucide-react';
+import { useParams, Link } from 'react-router-dom';
+import { CheckCircle2, Clock } from 'lucide-react';
 import { reservations } from '../../services/localDB';
 
 export default function ReserveSuccess() {
   const { reference } = useParams();
-  const navigate = useNavigate();
   const res = reservations.getByReference(reference);
 
   return (
