@@ -34,6 +34,27 @@ export const uid = () =>
   Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 
 const ADMIN_EMAIL = 'admin@nearbai.ph';
+const ROOM_IMAGE_URLS = [
+  'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1200&q=82',
+  'https://images.unsplash.com/photo-1505691938895-1758d7feb511?auto=format&fit=crop&w=1200&q=82',
+  'https://images.unsplash.com/photo-1566665797739-1674de7a421a?auto=format&fit=crop&w=1200&q=82',
+  'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&w=1200&q=82',
+  'https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?auto=format&fit=crop&w=1200&q=82',
+  'https://images.unsplash.com/photo-1598928506311-c55ded91a20c?auto=format&fit=crop&w=1200&q=82',
+  'https://images.unsplash.com/photo-1560185007-c5ca9d2c014d?auto=format&fit=crop&w=1200&q=82',
+  'https://images.unsplash.com/photo-1560185008-b033106af5c3?auto=format&fit=crop&w=1200&q=82',
+  'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=1200&q=82',
+  'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=1200&q=82',
+];
+
+export function getRoomImage(roomId = '') {
+  let hash = 0;
+  for (let i = 0; i < roomId.length; i++) {
+    hash = ((hash << 5) - hash + roomId.charCodeAt(i)) | 0;
+  }
+  return ROOM_IMAGE_URLS[Math.abs(hash) % ROOM_IMAGE_URLS.length];
+}
+
 const ADMIN_PASSWORD = 'Admin123!';
 
 // ---------- Seed admin + demo house ----------
@@ -140,13 +161,14 @@ export const rooms = {
     const filtered = houseId ? allRooms.filter((r) => r.houseId === houseId) : allRooms;
     return filtered.map((r) => {
       const occupants = tenantList.filter((t) => t.roomId === r.id && t.status === 'occupied').length;
-      return { ...r, occupants };
+      return { ...r, imageUrl: r.imageUrl || getRoomImage(r.id), occupants };
     });
   },
   create({ houseId, roomNumber, bedCapacity, monthlyRate, notes, gender, imageUrl }) {
     const all = read(KEYS.ROOMS);
     if (all.find((r) => r.houseId === houseId && r.roomNumber === roomNumber)) throw new Error(`Room ${roomNumber} already exists`);
-    const room = { id: uid(), houseId, roomNumber, bedCapacity: Number(bedCapacity), monthlyRate: Number(monthlyRate) || 0, gender: gender || 'mixed', notes: notes || '', imageUrl: imageUrl || '', createdAt: new Date().toISOString() };
+    const id = uid();
+    const room = { id, houseId, roomNumber, bedCapacity: Number(bedCapacity), monthlyRate: Number(monthlyRate) || 0, gender: gender || 'mixed', notes: notes || '', imageUrl: imageUrl || getRoomImage(id), createdAt: new Date().toISOString() };
     all.push(room); write(KEYS.ROOMS, all); return room;
   },
   update(id, changes) {

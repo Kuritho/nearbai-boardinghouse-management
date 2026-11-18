@@ -1,7 +1,7 @@
 // src/services/seedData.js
 // Populates the NearBai system with massive demo data across Mindanao.
 
-import { ensureSeeded } from './localDB';
+import { ensureSeeded, getRoomImage } from './localDB';
 
 const KEYS = {
   USERS: 'nb_users',
@@ -148,15 +148,16 @@ export function seedDemoData() {
     const roomCount = randInt(30, 40); 
     for (let i = 1; i <= roomCount; i++) {
       const isFemale = Math.random() > 0.5;
+      const roomId = uid();
       allRooms.push({
-        id: uid(),
+        id: roomId,
         houseId: house.id,
         roomNumber: `${100 + i}`, 
         bedCapacity: randInt(4, 8), 
         monthlyRate: randInt(3, 8) * 1000, 
         gender: isFemale ? 'female' : 'male',
         notes: Math.random() > 0.7 ? 'Air-conditioned' : '',
-        imageUrl: '',
+        imageUrl: getRoomImage(roomId),
         createdAt: new Date().toISOString(),
       });
     }
