@@ -27,6 +27,12 @@ const read = (k, f = []) => {
 };
 const write = (k, v) => localStorage.setItem(k, JSON.stringify(v));
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+const randomItem = (items) => items[Math.floor(Math.random() * items.length)];
+const randomPhone = () => `09${Math.floor(100000000 + Math.random() * 899999999)}`;
+
+const FIRST_NAMES = ['Juan','Maria','Jose','Ana','Pedro','Rosa','Carlos','Lucia','Miguel','Sofia','Mark','Jane','Ryan','Grace','Paolo','Mika','Daniel','Angela','Rafael','Camille'];
+const LAST_NAMES = ['Dela Cruz','Santos','Reyes','Cruz','Bautista','Garcia','Mendoza','Torres','Ramos','Villanueva','Aquino','Domingo','Rivera','Rosales','Pascual','Aguilar','Castillo','Flores','Gonzales'];
+const randomPersonName = () => `${randomItem(FIRST_NAMES)} ${randomItem(LAST_NAMES)}`;
 
 // Helper to generate dates in November 2026
 const getDateInNov2026 = (day, hour = 10) => {
@@ -117,32 +123,36 @@ export function seedDemoData() {
   tenantsConfig.forEach((t, idx) => {
     const id = uid();
     const room = getRoom(t.room);
-    const email = `${t.name.replace(/\s/g, '').toLowerCase()}@example.com`;
+    const randomName = randomPersonName();
+    const phone = randomPhone();
+    const email = `${randomName.replace(/\s/g, '').toLowerCase()}${idx}@example.com`;
     
     newUsers.push({
       id,
-      name: t.name,
+      name: randomName,
       email,
       password: 'Tenant123!',
       role: 'tenant',
       houseIds: [houseId],
-      phone: `0912345678${idx}`,
+      phone,
       roomId: room.id,
       moveInDate: '2026-10-15',
       status: 'occupied',
       createdAt: getDateInNov2026(1),
+      seedCode: t.name,
     });
 
     allTenants.push({
       id,
-      name: t.name,
+      name: randomName,
       email,
-      phone: `0912345678${idx}`,
-      emergencyContact: 'Contact Person - 09999999999',
+      phone,
+      emergencyContact: `Emergency contact - ${randomPhone()}`,
       roomId: room.id,
       moveInDate: '2026-10-15',
       status: 'occupied',
       createdAt: getDateInNov2026(1),
+      seedCode: t.name,
     });
   });
 
@@ -171,10 +181,10 @@ export function seedDemoData() {
     let note = '';
     
     // Specific overrides for the delinquent tenants
-    if (t.name === 'Tenant M04') {
+    if (t.seedCode === 'Tenant M04') {
       amountPaid = 0;
       note = 'Unpaid rent';
-    } else if (t.name === 'Tenant F06') {
+    } else if (t.seedCode === 'Tenant F06') {
       amountPaid = 1000; // Billed 2375, Paid 1000, Owed 1375
       note = 'Partial payment';
     } else {
@@ -272,9 +282,9 @@ export function seedDemoData() {
       reference: 'NBR-W1' + i,
       houseId,
       roomId: allRooms[0].id,
-      fullName: `Inquirer W1-${i}`,
-      phone: '09111111111',
-      email: `w1-${i}@example.com`,
+      fullName: randomPersonName(),
+      phone: randomPhone(),
+      email: `inquiry${i}@example.com`,
       moveInDate: '2026-12-01',
       notes: '',
       status: i < 2 ? 'approved' : 'rejected',
@@ -289,9 +299,9 @@ export function seedDemoData() {
       reference: 'NBR-W2' + i,
       houseId,
       roomId: allRooms[0].id,
-      fullName: `Inquirer W2-${i}`,
-      phone: '09222222222',
-      email: `w2-${i}@example.com`,
+      fullName: randomPersonName(),
+      phone: randomPhone(),
+      email: `inquiry${i}@example.com`,
       moveInDate: '2026-12-01',
       notes: '',
       status: i < 3 ? 'approved' : 'rejected',
@@ -306,9 +316,9 @@ export function seedDemoData() {
       reference: 'NBR-W3' + i,
       houseId,
       roomId: allRooms[0].id,
-      fullName: `Inquirer W3-${i}`,
-      phone: '09333333333',
-      email: `w3-${i}@example.com`,
+      fullName: randomPersonName(),
+      phone: randomPhone(),
+      email: `inquiry${i}@example.com`,
       moveInDate: '2026-12-01',
       notes: '',
       status: i < 4 ? 'approved' : 'rejected',
@@ -323,9 +333,9 @@ export function seedDemoData() {
       reference: 'NBR-W4' + i,
       houseId,
       roomId: allRooms[0].id,
-      fullName: `Inquirer W4-${i}`,
-      phone: '09444444444',
-      email: `w4-${i}@example.com`,
+      fullName: randomPersonName(),
+      phone: randomPhone(),
+      email: `inquiry${i}@example.com`,
       moveInDate: '2026-12-01',
       notes: '',
       status: i < 6 ? 'approved' : 'rejected',

@@ -3,9 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   Wallet, TrendingUp, AlertCircle, Activity, FileText, CheckCircle2,
-  BedDouble, Users, ArrowRight
+  BedDouble, Users, ArrowRight, Database, Trash2
 } from 'lucide-react';
 import { analytics, houses } from '../../services/localDB';
+import { seedDemoData, wipeAllData } from '../../services/seedData';
 import AnimatedNumber from '../../components/AnimatedNumber';
 
 export default function AdminDashboard() {
@@ -51,6 +52,23 @@ export default function AdminDashboard() {
       })
       .join(' ');
 
+  const handleLoadData = () => {
+    if (!window.confirm('Load randomized demo tenants, payments, utilities, expenses, and inquiries? Existing data will be replaced.')) return;
+    try {
+      const result = seedDemoData();
+      alert(`Demo data loaded: ${result.rooms} rooms, ${result.tenants} tenants, ${result.inquiries} inquiries.`);
+      window.location.reload();
+    } catch (error) {
+      alert(error.message || 'Unable to load demo data.');
+    }
+  };
+
+  const handleClearData = () => {
+    if (!window.confirm('Clear all application data? This cannot be undone.')) return;
+    wipeAllData();
+    window.location.href = '/login';
+  };
+
   return (
     <div className="pb-10">
       <div className="mb-6 flex items-start justify-between">
@@ -60,12 +78,20 @@ export default function AdminDashboard() {
           </h1>
           <p className="text-slate-600 text-sm mt-1">November 2026 Overview</p>
         </div>
-        <button
-          onClick={() => navigate('/admin/reports')}
-          className="btn-secondary hidden sm:flex"
-        >
-          <FileText size={16} className="mr-2" /> Generate Report
-        </button>
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          <button onClick={handleLoadData} className="btn-primary !px-3 !py-2">
+            <Database size={16} className="mr-2" /> Load All Data
+          </button>
+          <button onClick={handleClearData} className="btn-secondary !px-3 !py-2 !border-rose-200 !text-rose-600">
+            <Trash2 size={16} className="mr-2" /> Clear Data
+          </button>
+          <button
+            onClick={() => navigate('/admin/reports')}
+            className="btn-secondary hidden sm:flex"
+          >
+            <FileText size={16} className="mr-2" /> Generate Report
+          </button>
+        </div>
       </div>
 
       {/* ── TOP STATS ── */}
@@ -455,6 +481,45 @@ export default function AdminDashboard() {
           </div>
         )}
       </motion.div>
+
+      {/* ── DASHBOARD CONTROLS ── */}
+      <div className="grid grid-cols-2 gap-4 mb-6">
+        <button
+          onClick={handleLoadData}
+          className="card p-4 flex items-center justify-between bg-indigo-50 border border-indigo-200"
+        >
+          <div className="flex items-center gap-3">
+            <Database size={24} className="text-indigo-600" />
+            <div className="text-sm">
+              <p className="font-semibold text-slate-900">
+                Load Demo Data
+              </p>
+              <p className="text-slate-500">
+                Populate dashboard with sample data
+              </p>
+            </div>
+          </div>
+          <ArrowRight size={16} className="text-indigo-600" />
+        </button>
+
+        <button
+          onClick={handleClearData}
+          className="card p-4 flex items-center justify-between bg-rose-50 border border-rose-200"
+        >
+          <div className="flex items-center gap-3">
+            <Trash2 size={24} className="text-rose-600" />
+            <div className="text-sm">
+              <p className="font-semibold text-slate-900">
+                Clear All Data
+              </p>
+              <p className="text-slate-500">
+                Remove all data and reset dashboard
+              </p>
+            </div>
+          </div>
+          <ArrowRight size={16} className="text-rose-600" />
+        </button>
+      </div>
     </div>
   );
 }
