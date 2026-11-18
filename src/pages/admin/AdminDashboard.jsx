@@ -21,9 +21,9 @@ export default function AdminDashboard() {
     if (current) setData(analytics.dashboard(current.id));
   }, []);
 
-  if (!data) return <p className="p-8 text-slate-500">Loading dashboardâ€¦</p>;
+  if (!data) return <p className="p-8 text-slate-500">Loading dashboard…</p>;
 
-  const fmt = (n) => `â‚±${Number(n).toLocaleString('en-PH')}`;
+  const fmt = (n) => `₱${Number(n).toLocaleString('en-PH')}`;
 
   return (
     <div className="pb-10">
@@ -35,7 +35,7 @@ export default function AdminDashboard() {
         </p>
       </div>
 
-      {/* â”€â”€ DEMO DATA TOOLS â”€â”€ */}
+      {/* ── DEMO DATA TOOLS ── */}
       <div className="mb-6 p-4 rounded-2xl bg-gradient-to-r from-violet-50 to-fuchsia-50 border-2 border-dashed border-violet-300">
         <div className="flex items-center justify-between flex-wrap gap-3">
           <div className="flex items-center gap-3">
@@ -54,7 +54,7 @@ export default function AdminDashboard() {
                   try {
                     const result = seedDemoData();
                     alert(
-                      `âœ… Demo data loaded!\n\n` +
+                      `✅ Demo data loaded!\n\n` +
                       `Branches: ${result.branches}\n` +
                       `Rooms: ${result.rooms}\n` +
                       `Tenants: ${result.tenants}\n` +
@@ -67,7 +67,7 @@ export default function AdminDashboard() {
                     );
                     window.location.reload();
                   } catch (err) {
-                    alert('âŒ Error: ' + err.message);
+                    alert('❌ Error: ' + err.message);
                   }
                 }
               }}
@@ -77,9 +77,9 @@ export default function AdminDashboard() {
             </button>
             {/* <button
               onClick={() => {
-                if (window.confirm('âš ï¸ This will DELETE ALL data including the admin account. The admin will be re-seeded on next login. Continue?')) {
+                if (window.confirm('⚠️ This will DELETE ALL data including the admin account. The admin will be re-seeded on next login. Continue?')) {
                   wipeAllData();
-                  alert('All data wiped. Reloadingâ€¦');
+                  alert('All data wiped. Reloading…');
                   window.location.href = '/login';
                 }
               }}
@@ -172,13 +172,13 @@ export default function AdminDashboard() {
           </div>
           <div className="max-h-[300px] overflow-y-auto">
             {data.overdueList.length === 0 ? (
-              <div className="p-6 text-center text-sm text-slate-500">No overdue payments. ðŸŽ‰</div>
+              <div className="p-6 text-center text-sm text-slate-500">No overdue payments. 🎉</div>
             ) : (
               data.overdueList.map((r) => (
                 <div key={r.id} className="p-3 border-b border-slate-50 last:border-0 flex items-center justify-between">
                   <div>
                     <p className="font-semibold text-slate-800 text-sm">{r.tenantName}</p>
-                    <p className="text-xs text-slate-500">Room {r.roomNumber} Â· {r.billingMonth}</p>
+                    <p className="text-xs text-slate-500">Room {r.roomNumber} · {r.billingMonth}</p>
                   </div>
                   <div className="text-right">
                     <p className="text-sm font-bold text-rose-600">{fmt(r.balance)}</p>
@@ -201,13 +201,13 @@ export default function AdminDashboard() {
           </div>
           <div className="max-h-[300px] overflow-y-auto">
             {data.unpaidList.length === 0 ? (
-              <div className="p-6 text-center text-sm text-slate-500">Everyone is paid up! ðŸŽ‰</div>
+              <div className="p-6 text-center text-sm text-slate-500">Everyone is paid up! 🎉</div>
             ) : (
               data.unpaidList.map((r) => (
                 <div key={r.id} className="p-3 border-b border-slate-50 last:border-0 flex items-center justify-between">
                   <div>
                     <p className="font-semibold text-slate-800 text-sm">{r.tenantName}</p>
-                    <p className="text-xs text-slate-500">Room {r.roomNumber} Â· {r.billingMonth}</p>
+                    <p className="text-xs text-slate-500">Room {r.roomNumber} · {r.billingMonth}</p>
                   </div>
                   <div className="text-right">
                     <p className="text-sm font-bold text-amber-600">{fmt(r.balance)}</p>
@@ -295,10 +295,10 @@ export default function AdminDashboard() {
               <div key={p.id} className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-200">
                 <div className="min-w-0 flex-1">
                   <p className="font-semibold text-slate-900 text-sm truncate">{p.tenantName}</p>
-                  <p className="text-xs text-slate-500">Room {p.roomNumber} Â· {p.billingMonth}</p>
+                  <p className="text-xs text-slate-500">Room {p.roomNumber} · {p.billingMonth}</p>
                 </div>
                 <div className="text-right ml-3">
-                  <p className="font-bold text-slate-900 text-sm">â‚±{p.amountPaid.toLocaleString('en-PH')}</p>
+                  <p className="font-bold text-slate-900 text-sm">₱{p.amountPaid.toLocaleString('en-PH')}</p>
                   <StatusBadge status={p.status} />
                 </div>
               </div>
