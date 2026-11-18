@@ -1,4 +1,4 @@
-// src/services/localDB.js — NearBai Information System
+// src/services/localDB.js â€” NearBai Information System
 
 const KEYS = {
   USERS: 'nb_users',
@@ -267,7 +267,7 @@ export const rentPayments = {
         const tenant = tenantsArr.find((t) => t.id === p.tenantId);
         const room = tenant?.roomId ? allRooms.find((r) => r.id === tenant.roomId) : null;
         const balance = Math.max(0, p.amountDue - p.amountPaid);
-        return { ...p, status: computeRentStatus(p), balance, tenantName: tenant?.name || 'Unknown', roomNumber: room?.roomNumber || '—', houseId: room?.houseId || null };
+        return { ...p, status: computeRentStatus(p), balance, tenantName: tenant?.name || 'Unknown', roomNumber: room?.roomNumber || 'â€”', houseId: room?.houseId || null };
       })
       .filter((p) => !houseId || p.houseId === houseId)
       .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
@@ -354,7 +354,7 @@ export const utilityCharges = {
       .map((c) => {
         const tenant = tenantsArr.find((t) => t.id === c.tenantId);
         const room = tenant?.roomId ? allRooms.find((r) => r.id === tenant.roomId) : null;
-        return { ...c, tenantName: tenant?.name || 'Unknown', roomNumber: room?.roomNumber || '—', houseId: room?.houseId || null };
+        return { ...c, tenantName: tenant?.name || 'Unknown', roomNumber: room?.roomNumber || 'â€”', houseId: room?.houseId || null };
       })
       .filter((c) => !houseId || c.houseId === houseId);
   },
@@ -439,12 +439,12 @@ export const reservations = {
     const tenantsArr = read(KEYS.TENANTS);
     const guestReqs = read(KEYS.RESERVATIONS).map((r) => {
       const room = allRooms.find((rm) => rm.id === r.roomId);
-      return { ...r, type: 'guest', roomNumber: room?.roomNumber || '—', roomRate: room?.monthlyRate || 0, houseId: room?.houseId || null, tenantName: r.fullName };
+      return { ...r, type: 'guest', roomNumber: room?.roomNumber || 'â€”', roomRate: room?.monthlyRate || 0, houseId: room?.houseId || null, tenantName: r.fullName };
     });
     const tenantBookings = read(KEYS.BOOKINGS).map((b) => {
       const room = allRooms.find((rm) => rm.id === b.roomId);
       const tenant = tenantsArr.find((t) => t.id === b.tenantId);
-      return { ...b, type: 'booking', fullName: tenant?.name || b.guestName || 'Unknown', phone: tenant?.phone || b.guestPhone || '—', email: tenant?.email || '—', roomNumber: room?.roomNumber || '—', roomRate: room?.monthlyRate || 0, houseId: room?.houseId || null, tenantName: tenant?.name || b.guestName || 'Unknown', bedNumber: b.bedNumber };
+      return { ...b, type: 'booking', fullName: tenant?.name || b.guestName || 'Unknown', phone: tenant?.phone || b.guestPhone || 'â€”', email: tenant?.email || 'â€”', roomNumber: room?.roomNumber || 'â€”', roomRate: room?.monthlyRate || 0, houseId: room?.houseId || null, tenantName: tenant?.name || b.guestName || 'Unknown', bedNumber: b.bedNumber };
     });
     return [...guestReqs, ...tenantBookings].filter((r) => !houseId || r.houseId === houseId).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   },
@@ -520,14 +520,14 @@ export const bookings = {
     return read(KEYS.BOOKINGS).map((b) => {
       const room = allRooms.find((r) => r.id === b.roomId);
       const tenant = tenantsArr.find((t) => t.id === b.tenantId);
-      return { ...b, roomNumber: room?.roomNumber || '—', houseId: room?.houseId || null, tenantName: tenant?.name || b.guestName || 'Unknown' };
+      return { ...b, roomNumber: room?.roomNumber || 'â€”', houseId: room?.houseId || null, tenantName: tenant?.name || b.guestName || 'Unknown' };
     }).filter((b) => !houseId || b.houseId === houseId).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   },
   listForTenant(tenantId) {
     const allRooms = read(KEYS.ROOMS);
     return read(KEYS.BOOKINGS).filter((b) => b.tenantId === tenantId).map((b) => {
       const room = allRooms.find((r) => r.id === b.roomId);
-      return { ...b, roomNumber: room?.roomNumber || '—' };
+      return { ...b, roomNumber: room?.roomNumber || 'â€”' };
     });
   },
   takenBeds(roomId) {
@@ -662,7 +662,6 @@ export const globalData = {
     const allUtils = read(KEYS.UTILITY_CHARGES);
     const allExpenses = read(KEYS.EXPENSES);
     const allReservations = read(KEYS.RESERVATIONS);
-    const allBookings = read(KEYS.BOOKINGS);
 
     const houseById = {};
     allHouses.forEach(h => { houseById[h.id] = h; });
@@ -676,7 +675,7 @@ export const globalData = {
     const branchOfRoom = (roomId) => {
       const room = roomById[roomId];
       const house = room ? houseById[room.houseId] : null;
-      return house ? house.name : '—';
+      return house ? house.name : 'â€”';
     };
 
     const rents = allRents.map(p => {
@@ -693,7 +692,7 @@ export const globalData = {
         status,
         balance,
         tenantName: tenant?.name || 'Unknown',
-        roomNumber: room?.roomNumber || '—',
+        roomNumber: room?.roomNumber || 'â€”',
         branch: branchOfRoom(room?.id),
         houseId: room?.houseId || null,
       };
@@ -705,7 +704,7 @@ export const globalData = {
       return {
         ...c,
         tenantName: tenant?.name || 'Unknown',
-        roomNumber: room?.roomNumber || '—',
+        roomNumber: room?.roomNumber || 'â€”',
         branch: branchOfRoom(room?.id),
         houseId: room?.houseId || null,
       };
@@ -713,14 +712,14 @@ export const globalData = {
 
     const expenses = allExpenses.map(e => ({
       ...e,
-      branch: houseById[e.houseId]?.name || '—',
+      branch: houseById[e.houseId]?.name || 'â€”',
     }));
 
     const tenants = allTenants.map(t => {
       const room = t.roomId ? roomById[t.roomId] : null;
       return {
         ...t,
-        roomNumber: room?.roomNumber || '—',
+        roomNumber: room?.roomNumber || 'â€”',
         branch: branchOfRoom(t.roomId),
       };
     });
@@ -729,7 +728,7 @@ export const globalData = {
       const room = r.roomId ? roomById[r.roomId] : null;
       return {
         ...r,
-        roomNumber: room?.roomNumber || '—',
+        roomNumber: room?.roomNumber || 'â€”',
         branch: branchOfRoom(r.roomId),
       };
     });
@@ -799,7 +798,7 @@ export const globalAnalytics = {
       return {
         id: house.id,
         name: house.name,
-        city: house.city || house.address || '—',
+        city: house.city || house.address || 'â€”',
         tenants: occupiedTenants.length,
         totalBeds,
         occupancyRate,

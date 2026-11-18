@@ -253,7 +253,6 @@ export function seedDemoData() {
   // 5. Generate utility charges (1 month history)
   const allUtils = [];
   allTenants.forEach((t) => {
-    const room = allRooms.find(r => r.id === t.roomId);
     const roommates = allTenants.filter(x => x.roomId === t.roomId).length;
     const billingDate = new Date(now.getFullYear(), now.getMonth(), 1);
     
