@@ -1,127 +1,108 @@
-import { NavLink } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { NavLink, useNavigate } from 'react-router-dom';
 import {
-  LayoutDashboard, Building2, DoorOpen, Users, Wallet, Receipt,
-  TrendingUp, LogOut, Settings, Wrench, Shield, Clock, Megaphone,
-  Heart, FileSpreadsheet, Layers, // <-- Layers added
+  LayoutDashboard, Building2, DoorOpen, Users, CalendarClock,
+  Wallet, Zap, Receipt, BarChart3, FileText, Settings, Megaphone,
+  LogOut, UserCog, Shield, Heart, MessageSquare, Database // <-- Added Database
 } from 'lucide-react';
-import Logo from './Logo';
-import PropertySwitcher from './PropertySwitcher';
+import { useAuth } from '../context/AuthContext';
 
 export default function Sidebar() {
   const { user, logout } = useAuth();
-  const role = user?.role;
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
 
   const adminLinks = [
     { to: '/admin', icon: LayoutDashboard, label: 'Dashboard', end: true },
-    { to: '/admin/global', icon: Layers, label: 'All Branches' }, // <-- NEW
+    { to: '/admin/global', icon: BarChart3, label: 'Global Analytics' },
     { to: '/admin/properties', icon: Building2, label: 'Properties' },
     { to: '/admin/rooms', icon: DoorOpen, label: 'Rooms' },
     { to: '/admin/tenants', icon: Users, label: 'Tenants' },
-    { to: '/admin/reservations', icon: Clock, label: 'Reservations' },
+    { to: '/admin/reservations', icon: CalendarClock, label: 'Inquiries' },
     { to: '/admin/rent', icon: Wallet, label: 'Rent Payments' },
-    { to: '/admin/utilities', icon: Receipt, label: 'Utility Charges' },
-    { to: '/admin/expenses', icon: Wrench, label: 'Expenses' },
-    { to: '/admin/analytics', icon: TrendingUp, label: 'Analytics' },
-    { to: '/admin/reports', icon: FileSpreadsheet, label: 'Reports & Exports' },
+    { to: '/admin/utilities', icon: Zap, label: 'Utilities' },
+    { to: '/admin/expenses', icon: Receipt, label: 'Expenses' },
+    { to: '/admin/analytics', icon: BarChart3, label: 'Analytics' },
+    { to: '/admin/reports', icon: FileText, label: 'Reports' },
+    { to: '/admin/simulation', icon: Database, label: 'Simulation Data' }, // <-- NEW
     { to: '/admin/announcements', icon: Megaphone, label: 'Announcements' },
-    { to: '/admin/settings', icon: Settings, label: 'Payment Settings' },
-    { to: '/admin/users', icon: Shield, label: 'Manage Users' },
+    { to: '/admin/settings', icon: Settings, label: 'Settings' },
+    { to: '/admin/users', icon: Shield, label: 'Staff & Users' },
   ];
 
   const caretakerLinks = [
     { to: '/caretaker', icon: LayoutDashboard, label: 'Dashboard', end: true },
+    { to: '/caretaker/reservations', icon: MessageSquare, label: 'Inquiries' },
     { to: '/caretaker/tenants', icon: Users, label: 'Tenants' },
-    { to: '/caretaker/reservations', icon: Clock, label: 'Reservations' },
-    { to: '/caretaker/rent', icon: Wallet, label: 'Log Payments' },
+    { to: '/caretaker/rent', icon: Wallet, label: 'Rent Payments' },
+    { to: '/caretaker/announcements', icon: Megaphone, label: 'Announcements' },
   ];
 
   const tenantLinks = [
     { to: '/tenant', icon: LayoutDashboard, label: 'Dashboard', end: true },
-    { to: '/tenant/bookings', icon: Clock, label: 'My Bookings' },
-    { to: '/tenant/pay', icon: Wallet, label: 'Pay Rent' },
+    { to: '/tenant/bookings', icon: CalendarClock, label: 'My Bookings' },
+    { to: '/tenant/announcements', icon: Megaphone, label: 'Announcements' },
     { to: '/tenant/favorites', icon: Heart, label: 'Favorites' },
   ];
 
-  const links =
-    role === 'admin' ? adminLinks
-    : role === 'caretaker' ? caretakerLinks
-    : tenantLinks;
-
-  const sectionLabel =
-    role === 'admin' ? 'Management'
-    : role === 'caretaker' ? 'Operations'
-    : 'My Account';
+  let links = [];
+  let title = '';
+  if (user?.role === 'admin') { links = adminLinks; title = 'Admin Panel'; }
+  else if (user?.role === 'caretaker') { links = caretakerLinks; title = 'Caretaker Panel'; }
+  else if (user?.role === 'tenant') { links = tenantLinks; title = 'Tenant Portal'; }
 
   return (
-    <aside className="fixed inset-y-0 left-0 w-64 bg-white border-r border-slate-100 flex flex-col z-40">
-      {/* Logo */}
-      <div className="px-5 py-5 border-b border-slate-100">
-        <Logo size={42} showWordmark />
+    <aside className="fixed left-0 top-0 bottom-0 w-64 bg-white border-r border-slate-200 flex flex-col z-40">
+      <div className="p-6 border-b border-slate-100">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-lg">
+            <Building2 size={20} className="text-white" />
+          </div>
+          <div>
+            <p className="font-extrabold text-slate-900 text-lg tracking-tight">NearBai</p>
+            <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">{title}</p>
+          </div>
+        </div>
       </div>
 
-      {/* Property switcher */}
-      {(role === 'admin' || role === 'caretaker') && (
-        <div className="px-3 pt-3">
-          <PropertySwitcher />
-        </div>
-      )}
-
-      {/* Nav */}
-      <nav className="flex-1 px-3 py-3 space-y-0.5 overflow-y-auto">
-        <p className="px-3 pt-2 pb-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-          {sectionLabel}
-        </p>
-
-        {links.map(({ to, icon: Icon, label, end }) => (
+      <nav className="flex-1 overflow-y-auto p-4 space-y-1">
+        {links.map((link) => (
           <NavLink
-            key={to}
-            to={to}
-            end={end}
+            key={link.to}
+            to={link.to}
+            end={link.end}
             className={({ isActive }) =>
-              `group flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-sm ${
+              `flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition ${
                 isActive
-                  ? 'bg-indigo-50 text-indigo-700 font-semibold'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                  ? 'bg-indigo-50 text-indigo-700'
+                  : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
               }`
             }
           >
-            {({ isActive }) => (
-              <>
-                <div
-                  className={`flex items-center justify-center w-7 h-7 rounded-lg transition ${
-                    isActive
-                      ? 'bg-indigo-100 text-indigo-600'
-                      : 'text-slate-400 group-hover:text-slate-600'
-                  }`}
-                >
-                  <Icon size={15} strokeWidth={2.3} />
-                </div>
-                <span className="flex-1">{label}</span>
-                {isActive && <div className="w-1 h-1 rounded-full bg-indigo-500" />}
-              </>
-            )}
+            <link.icon size={18} />
+            {link.label}
           </NavLink>
         ))}
       </nav>
 
-      {/* User footer */}
-      <div className="p-3 border-t border-slate-100">
-        <div className="flex items-center gap-3 px-2 py-2 mb-1">
-          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-500 via-violet-500 to-pink-500 flex items-center justify-center text-white text-xs font-bold shrink-0">
-            {user?.name?.[0]?.toUpperCase()}
+      <div className="p-4 border-t border-slate-100">
+        <div className="flex items-center gap-3 mb-3">
+          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-white font-bold text-sm">
+            {user?.name?.[0]?.toUpperCase() || '?'}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-xs font-bold text-slate-900 truncate">{user?.name}</p>
-            <p className="text-[10px] text-slate-400 capitalize font-medium">{user?.role}</p>
+            <p className="text-sm font-bold text-slate-900 truncate">{user?.name}</p>
+            <p className="text-xs text-slate-500 capitalize">{user?.role}</p>
           </div>
         </div>
         <button
-          onClick={logout}
-          className="flex items-center justify-center gap-2 w-full px-3 py-2 text-xs text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition font-semibold"
+          onClick={handleLogout}
+          className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-sm font-semibold text-rose-600 bg-rose-50 hover:bg-rose-100 transition"
         >
-          <LogOut size={13} />
-          Sign out
+          <LogOut size={16} /> Log out
         </button>
       </div>
     </aside>

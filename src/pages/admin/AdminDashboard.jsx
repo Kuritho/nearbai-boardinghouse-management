@@ -1,311 +1,460 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import {
-  Users, DoorOpen, Wallet, AlertTriangle, TrendingUp, ArrowRight,
-  Receipt, Home, Clock, Zap, DollarSign,
-  Database
+  Wallet, TrendingUp, AlertCircle, Activity, FileText, CheckCircle2,
+  BedDouble, Users, ArrowRight
 } from 'lucide-react';
-import StatCard from '../../components/StatCard';
-import StatusBadge from '../../components/StatusBadge';
 import { analytics, houses } from '../../services/localDB';
-import { seedDemoData } from '../../services/seedData';
+import AnimatedNumber from '../../components/AnimatedNumber';
 
 export default function AdminDashboard() {
-  const [data, setData] = useState(null);
-  const [house, setHouse] = useState(null);
   const navigate = useNavigate();
+  const [data, setData] = useState(null);
+  const [demand, setDemand] = useState([]);
 
   useEffect(() => {
-    const current = houses.current();
-    setHouse(current);
-    if (current) setData(analytics.dashboard(current.id));
+    const house = houses.current();
+    if (house) {
+      setData(analytics.dashboard(house.id));
+      setDemand(analytics.roomDemand(house.id));
+    }
   }, []);
 
-  if (!data) return <p className="p-8 text-slate-500">Loading dashboard…</p>;
+  if (!data) return <div className="p-8 text-center text-slate-500">Loading dashboard...</div>;
 
-  const fmt = (n) => `₱${Number(n).toLocaleString('en-PH')}`;
+  const maxDemand = Math.max(...demand.map((d) => d.inquiries), 1);
+
+  const container = {
+    hidden: { opacity: 0 },
+    show: { opacity: 1, transition: { staggerChildren: 0.05 } },
+  };
+  const item = { hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0 } };
+
+  // Weekly Inquiry Trend (Table H)
+  const inquiryTrendData = [
+    { name: 'W1', total: 5, qualified: 2 },
+    { name: 'W2', total: 7, qualified: 3 },
+    { name: 'W3', total: 8, qualified: 4 },
+    { name: 'W4', total: 10, qualified: 6 },
+  ];
+  const maxVal = 12;
+  const chartHeight = 180;
+  const chartWidth = 400;
+  const xStep = chartWidth / (inquiryTrendData.length - 1);
+  const makePath = (key) =>
+    inquiryTrendData
+      .map((d, i) => {
+        const x = i * xStep;
+        const y = chartHeight - (d[key] / maxVal) * chartHeight;
+        return `${i === 0 ? 'M' : 'L'} ${x} ${y}`;
+      })
+      .join(' ');
 
   return (
     <div className="pb-10">
-      {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">Dashboard</h1>
-        <p className="text-slate-600 text-sm mt-1 flex items-center gap-1.5">
-          <Home size={13} /> {house?.name || 'No property'}
-        </p>
-      </div>
-
-      {/* ── DEMO DATA TOOLS ── */}
-      <div className="mb-6 p-4 rounded-2xl bg-gradient-to-r from-violet-50 to-fuchsia-50 border-2 border-dashed border-violet-300">
-        <div className="flex items-center justify-between flex-wrap gap-3">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-violet-100 flex items-center justify-center">
-              <Database size={18} className="text-violet-600" />
-            </div>
-            {/* <div>
-              <p className="font-bold text-slate-900 text-sm">Demo Data Tools</p>
-              <p className="text-xs text-slate-600">Populate with 3 branches + ~90 tenants, or wipe everything.</p>
-            </div> */}
-          </div>
-          <div className="flex gap-2">
-            <button
-              onClick={() => {
-                if (window.confirm('This will REPLACE all current data with 3 branches, ~90 tenants, rent payments, utilities, expenses, and announcements. Continue?')) {
-                  try {
-                    const result = seedDemoData();
-                    alert(
-                      `✅ Demo data loaded!\n\n` +
-                      `Branches: ${result.branches}\n` +
-                      `Rooms: ${result.rooms}\n` +
-                      `Tenants: ${result.tenants}\n` +
-                      `Rent records: ${result.rentRecords}\n` +
-                      `Utility records: ${result.utilityRecords}\n` +
-                      `Expenses: ${result.expenses}\n` +
-                      `Announcements: ${result.announcements}\n` +
-                      `Reservations: ${result.reservations}\n\n` +
-                      `Page will reload.`
-                    );
-                    window.location.reload();
-                  } catch (err) {
-                    alert('❌ Error: ' + err.message);
-                  }
-                }
-              }}
-              className="btn-primary !px-4 !py-2 !min-h-0 text-xs"
-            >
-              <Database size={14} className="mr-1.5" /> Load All Data
-            </button>
-            {/* <button
-              onClick={() => {
-                if (window.confirm('⚠️ This will DELETE ALL data including the admin account. The admin will be re-seeded on next login. Continue?')) {
-                  wipeAllData();
-                  alert('All data wiped. Reloading…');
-                  window.location.href = '/login';
-                }
-              }}
-              className="btn-secondary !px-4 !py-2 !min-h-0 text-xs"
-            >
-              <RefreshCw size={14} className="mr-1.5" /> Wipe All
-            </button> */}
-          </div>
+      <div className="mb-6 flex items-start justify-between">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
+            Dashboard
+          </h1>
+          <p className="text-slate-600 text-sm mt-1">November 2026 Overview</p>
         </div>
-      </div>
-
-      {/* Pending Reservations Alert */}
-      {data.pendingReservations > 0 && (
         <button
-          onClick={() => navigate('/admin/reservations')}
-          className="w-full mb-5 bg-gradient-to-r from-amber-50 to-orange-50 border-2 border-amber-200 rounded-2xl p-4 flex items-center justify-between text-left hover:shadow-md transition"
+          onClick={() => navigate('/admin/reports')}
+          className="btn-secondary hidden sm:flex"
         >
-          <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center shadow-md shrink-0">
-              <Clock size={20} className="text-white" />
-            </div>
-            <div>
-              <p className="font-bold text-amber-900 text-sm">
-                {data.pendingReservations} reservation{data.pendingReservations > 1 ? 's' : ''} awaiting review
-              </p>
-              <p className="text-xs text-amber-700">Click to review guest requests</p>
-            </div>
-          </div>
-          <ArrowRight size={20} className="text-amber-600 shrink-0" />
+          <FileText size={16} className="mr-2" /> Generate Report
         </button>
-      )}
-
-      {/* Top KPIs */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
-        <StatCard icon={DoorOpen} label="Rooms" value={data.roomsCount} color="indigo" />
-        <StatCard icon={Users} label="Tenants" value={data.tenantsCount} color="emerald" />
-        <StatCard icon={TrendingUp} label="Occupancy" value={`${data.occupancyRate}%`} color="sky" />
-        <StatCard icon={AlertTriangle} label="Overdue" value={data.overdueList.length} color="rose" />
       </div>
 
-      {/* Financial Summary Row */}
-      <div className="grid sm:grid-cols-3 gap-3 mb-6">
-        <div className="card-gradient bg-gradient-to-br from-indigo-50 to-violet-50 border-indigo-100">
+      {/* ── TOP STATS ── */}
+      <motion.div
+        variants={container}
+        initial="hidden"
+        animate="show"
+        className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6"
+      >
+        <motion.div variants={item} className="card !p-4">
           <div className="flex items-center gap-2 mb-2">
-            <div className="p-1.5 rounded-lg bg-white/60">
-              <Wallet size={16} className="text-indigo-600" />
+            <div className="p-1.5 rounded-lg bg-indigo-50">
+              <BedDouble size={14} className="text-indigo-600" />
             </div>
-            <p className="text-xs font-bold text-slate-600 uppercase">Collections</p>
+            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+              Occupancy
+            </span>
           </div>
-          <p className="text-2xl font-extrabold text-slate-900">{fmt(data.totalCollections)}</p>
-          <p className="text-xs text-slate-500 mt-1">
-            Rent {fmt(data.totalRentPaid)} + Utils {fmt(data.totalUtilPaid)}
+          <p className="text-2xl font-bold text-slate-900">
+            <AnimatedNumber value={data.occupancyRate} suffix="%" />
           </p>
-        </div>
+          <p className="text-xs text-slate-500 mt-1">
+            {data.occupiedBeds} / {data.totalCapacity} beds
+          </p>
+        </motion.div>
 
-        <div className="card">
+        <motion.div variants={item} className="card !p-4">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="p-1.5 rounded-lg bg-emerald-50">
+              <Wallet size={14} className="text-emerald-600" />
+            </div>
+            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+              Rent Collected
+            </span>
+          </div>
+          <p className="text-2xl font-bold text-slate-900">
+            <AnimatedNumber value={data.totalRentPaid} prefix="₱" />
+          </p>
+          <p className="text-xs text-slate-500 mt-1">
+            of ₱{data.totalRentDue.toLocaleString()} billed
+          </p>
+        </motion.div>
+
+        <motion.div variants={item} className="card !p-4">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="p-1.5 rounded-lg bg-sky-50">
+              <TrendingUp size={14} className="text-sky-600" />
+            </div>
+            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+              Net Cash Flow
+            </span>
+          </div>
+          <p className="text-2xl font-bold text-slate-900">
+            <AnimatedNumber value={data.netIncome} prefix="₱" />
+          </p>
+          <p className="text-xs text-slate-500 mt-1">
+            after ₱{data.totalExpenses.toLocaleString()} expenses
+          </p>
+        </motion.div>
+
+        <motion.div
+          variants={item}
+          className="card !p-4 !bg-rose-50 !border-rose-100"
+        >
           <div className="flex items-center gap-2 mb-2">
             <div className="p-1.5 rounded-lg bg-rose-100">
-              <Receipt size={16} className="text-rose-600" />
+              <AlertCircle size={14} className="text-rose-600" />
             </div>
-            <p className="text-xs font-bold text-slate-600 uppercase">Expenses</p>
+            <span className="text-xs font-semibold text-rose-800 uppercase tracking-wide">
+              Overdue
+            </span>
           </div>
-          <p className="text-2xl font-extrabold text-slate-900">{fmt(data.totalExpenses)}</p>
-        </div>
-
-        <div className="card border-emerald-200 bg-emerald-50/30">
-          <div className="flex items-center gap-2 mb-2">
-            <div className="p-1.5 rounded-lg bg-emerald-100">
-              <DollarSign size={16} className="text-emerald-600" />
-            </div>
-            <p className="text-xs font-bold text-slate-600 uppercase">Net Income</p>
-          </div>
-          <p className={`text-2xl font-extrabold ${data.netIncome >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
-            {fmt(data.netIncome)}
+          <p className="text-2xl font-bold text-rose-700">
+            <AnimatedNumber value={data.overdueList.length} /> tenants
           </p>
-        </div>
-      </div>
+          <button
+            onClick={() => navigate('/admin/rent')}
+            className="text-xs text-rose-600 font-semibold mt-1 hover:underline"
+          >
+            View Details →
+          </button>
+        </motion.div>
+      </motion.div>
 
-      {/* Who Owes Money (Actionable Lists) */}
-      <div className="grid lg:grid-cols-2 gap-4 mb-6">
-        
-        {/* Overdue List */}
-        <div className="card !p-0 overflow-hidden">
-          <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-rose-50/50">
+      {/* ── STEP 4: ROOM DEMAND STATISTICS ── */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.15 }}
+        className="card !p-0 overflow-hidden mb-6"
+      >
+        <div className="p-4 border-b border-slate-100 bg-slate-50 flex items-center justify-between">
+          <div>
             <h2 className="font-bold text-slate-900 flex items-center gap-2">
-              <AlertTriangle size={16} className="text-rose-500" />
-              Overdue Rent
+              <Users size={18} className="text-indigo-600" /> Room Demand Statistics
             </h2>
-            <span className="chip-rose">{data.overdueList.length}</span>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Matches qualified inquiries against available beds
+            </p>
           </div>
-          <div className="max-h-[300px] overflow-y-auto">
-            {data.overdueList.length === 0 ? (
-              <div className="p-6 text-center text-sm text-slate-500">No overdue payments. 🎉</div>
-            ) : (
-              data.overdueList.map((r) => (
-                <div key={r.id} className="p-3 border-b border-slate-50 last:border-0 flex items-center justify-between">
-                  <div>
-                    <p className="font-semibold text-slate-800 text-sm">{r.tenantName}</p>
-                    <p className="text-xs text-slate-500">Room {r.roomNumber} · {r.billingMonth}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm font-bold text-rose-600">{fmt(r.balance)}</p>
-                    <button onClick={() => navigate('/admin/rent')} className="text-[10px] font-bold text-rose-500 hover:underline">Collect</button>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
-
-        {/* Unpaid / Partial List */}
-        <div className="card !p-0 overflow-hidden">
-          <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-amber-50/50">
-            <h2 className="font-bold text-slate-900 flex items-center gap-2">
-              <Clock size={16} className="text-amber-500" />
-              Pending / Partial Rent
-            </h2>
-            <span className="chip-amber">{data.unpaidList.length}</span>
-          </div>
-          <div className="max-h-[300px] overflow-y-auto">
-            {data.unpaidList.length === 0 ? (
-              <div className="p-6 text-center text-sm text-slate-500">Everyone is paid up! 🎉</div>
-            ) : (
-              data.unpaidList.map((r) => (
-                <div key={r.id} className="p-3 border-b border-slate-50 last:border-0 flex items-center justify-between">
-                  <div>
-                    <p className="font-semibold text-slate-800 text-sm">{r.tenantName}</p>
-                    <p className="text-xs text-slate-500">Room {r.roomNumber} · {r.billingMonth}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm font-bold text-amber-600">{fmt(r.balance)}</p>
-                    <StatusBadge status={r.status} />
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Utility Breakdown & Quick Actions */}
-      <div className="grid lg:grid-cols-3 gap-4 mb-6">
-        <div className="lg:col-span-1 card bg-gradient-to-br from-sky-50 to-blue-50 border-sky-100">
-          <div className="flex items-center gap-2 mb-4">
-            <div className="p-2 rounded-lg bg-white/60">
-              <Zap size={18} className="text-sky-600" />
-            </div>
-            <h2 className="font-bold text-slate-900">Utilities</h2>
-          </div>
-          <div className="space-y-3">
-            <div>
-              <p className="text-xs font-bold text-slate-500 uppercase">Total Billed</p>
-              <p className="text-xl font-bold text-slate-900">{fmt(data.totalUtilBilled)}</p>
-            </div>
-            <div className="flex justify-between items-end">
-              <div>
-                <p className="text-xs font-bold text-slate-500 uppercase">Collected</p>
-                <p className="text-sm font-bold text-emerald-600">{fmt(data.totalUtilPaid)}</p>
-              </div>
-              <div className="text-right">
-                <p className="text-xs font-bold text-slate-500 uppercase">Unpaid</p>
-                <p className="text-sm font-bold text-rose-600">{fmt(data.totalUtilUnpaid)}</p>
-              </div>
-            </div>
-            <div className="w-full h-2 bg-slate-200 rounded-full mt-2 overflow-hidden flex">
-              <div 
-                className="h-full bg-emerald-500" 
-                style={{ width: `${(data.totalUtilPaid / (data.totalUtilBilled || 1)) * 100}%` }} 
-              />
-            </div>
-          </div>
-        </div>
-
-        <div className="lg:col-span-2 card">
-          <h2 className="text-base font-bold text-slate-900 mb-4">Quick Actions</h2>
-          <div className="grid grid-cols-2 gap-2">
-            <button onClick={() => navigate('/admin/rooms')} className="p-4 rounded-xl bg-slate-50 border border-slate-200 text-left hover:bg-slate-100 transition">
-              <DoorOpen size={20} className="text-indigo-500 mb-2" />
-              <p className="font-bold text-slate-900 text-sm">Setup Rooms</p>
-            </button>
-            <button onClick={() => navigate('/admin/tenants')} className="p-4 rounded-xl bg-slate-50 border border-slate-200 text-left hover:bg-slate-100 transition">
-              <Users size={20} className="text-emerald-500 mb-2" />
-              <p className="font-bold text-slate-900 text-sm">Add Tenant</p>
-            </button>
-            <button onClick={() => navigate('/admin/rent')} className="p-4 rounded-xl bg-slate-50 border border-slate-200 text-left hover:bg-slate-100 transition">
-              <Wallet size={20} className="text-sky-500 mb-2" />
-              <p className="font-bold text-slate-900 text-sm">Log Payment</p>
-            </button>
-            <button onClick={() => navigate('/admin/expenses')} className="p-4 rounded-xl bg-slate-50 border border-slate-200 text-left hover:bg-slate-100 transition">
-              <Receipt size={20} className="text-rose-500 mb-2" />
-              <p className="font-bold text-slate-900 text-sm">Log Expense</p>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Recent Payments */}
-      <div className="card">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-base font-bold text-slate-900">Recent Rent Payments</h2>
-          <button onClick={() => navigate('/admin/rent')} className="text-xs font-semibold text-indigo-600 hover:text-indigo-700 flex items-center gap-1">
-            View all <ArrowRight size={12} />
+          <button
+            onClick={() => navigate('/admin/reservations')}
+            className="text-xs font-semibold text-indigo-600 hover:underline flex items-center gap-1"
+          >
+            Manage Inquiries <ArrowRight size={12} />
           </button>
         </div>
-        {data.recentRent.length === 0 ? (
-          <div className="text-center py-8">
-            <Wallet size={24} className="text-slate-300 mx-auto mb-2" />
-            <p className="text-sm text-slate-500">No rent records yet</p>
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {data.recentRent.map((p) => (
-              <div key={p.id} className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-200">
-                <div className="min-w-0 flex-1">
-                  <p className="font-semibold text-slate-900 text-sm truncate">{p.tenantName}</p>
-                  <p className="text-xs text-slate-500">Room {p.roomNumber} · {p.billingMonth}</p>
+
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3 p-4">
+          {demand.map((room) => (
+            <div
+              key={room.id}
+              className="border border-slate-100 rounded-xl p-3 bg-white"
+            >
+              <div className="flex items-center justify-between mb-2">
+                <div>
+                  <p className="font-bold text-slate-900 text-sm">
+                    Room {room.roomNumber}
+                  </p>
+                  <p className="text-[10px] uppercase tracking-wide text-slate-400">
+                    {room.type} · {room.capacity} beds
+                  </p>
                 </div>
-                <div className="text-right ml-3">
-                  <p className="font-bold text-slate-900 text-sm">₱{p.amountPaid.toLocaleString('en-PH')}</p>
-                  <StatusBadge status={p.status} />
+                <span
+                  className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                    room.vacant === 0
+                      ? 'bg-rose-50 text-rose-600'
+                      : 'bg-emerald-50 text-emerald-600'
+                  }`}
+                >
+                  {room.vacant === 0 ? 'FULL' : `${room.vacant} VACANT`}
+                </span>
+              </div>
+
+              <div className="mb-2">
+                <div className="flex justify-between text-[10px] text-slate-500 mb-1">
+                  <span>Qualified Inquiries</span>
+                  <span className="font-bold text-slate-700">
+                    {room.qualified}
+                  </span>
+                </div>
+                <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-indigo-500 rounded-full"
+                    style={{
+                      width: `${(room.qualified / maxDemand) * 100}%`,
+                    }}
+                  />
                 </div>
               </div>
-            ))}
+
+              <div className="flex items-center justify-between text-[10px] text-slate-500 pt-2 border-t border-slate-50">
+                <span>
+                  Total Inquiries:{' '}
+                  <strong className="text-slate-700">{room.inquiries}</strong>
+                </span>
+                <span>
+                  Pending:{' '}
+                  <strong className="text-amber-600">{room.pending}</strong>
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </motion.div>
+
+      {/* ── WEEKLY INQUIRY TREND + KEY RESULTS ── */}
+      <div className="grid lg:grid-cols-3 gap-4 mb-6">
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="card lg:col-span-2 !p-5"
+        >
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-bold text-slate-900 flex items-center gap-2">
+              <Activity size={18} className="text-indigo-600" /> Weekly Inquiry Trend
+            </h2>
+            <div className="flex gap-4 text-xs">
+              <div className="flex items-center gap-1.5">
+                <div className="w-2 h-2 rounded-full bg-indigo-500" /> Total
+              </div>
+              <div className="flex items-center gap-1.5">
+                <div className="w-2 h-2 rounded-full bg-violet-400" /> Qualified
+              </div>
+            </div>
+          </div>
+
+          <div className="w-full flex justify-center">
+            <svg
+              viewBox={`-30 -10 ${chartWidth + 60} ${chartHeight + 60}`}
+              className="w-full max-w-lg"
+            >
+              {[0, 2, 4, 6, 8, 10, 12].map((v) => {
+                const y = chartHeight - (v / maxVal) * chartHeight;
+                return (
+                  <g key={v}>
+                    <line
+                      x1="0"
+                      y1={y}
+                      x2={chartWidth}
+                      y2={y}
+                      stroke="#f1f5f9"
+                      strokeWidth="1"
+                    />
+                    <text
+                      x="-10"
+                      y={y + 4}
+                      textAnchor="end"
+                      fontSize="10"
+                      fill="#94a3b8"
+                    >
+                      {v}
+                    </text>
+                  </g>
+                );
+              })}
+
+              <path
+                d={makePath('total')}
+                fill="none"
+                stroke="#6366f1"
+                strokeWidth="3"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              <path
+                d={makePath('qualified')}
+                fill="none"
+                stroke="#a78bfa"
+                strokeWidth="3"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+
+              {inquiryTrendData.map((d, i) => {
+                const x = i * xStep;
+                const yT = chartHeight - (d.total / maxVal) * chartHeight;
+                const yQ = chartHeight - (d.qualified / maxVal) * chartHeight;
+                return (
+                  <g key={d.name}>
+                    <circle
+                      cx={x}
+                      cy={yT}
+                      r="4"
+                      fill="#6366f1"
+                      stroke="#fff"
+                      strokeWidth="2"
+                    />
+                    <circle
+                      cx={x}
+                      cy={yQ}
+                      r="4"
+                      fill="#a78bfa"
+                      stroke="#fff"
+                      strokeWidth="2"
+                    />
+                    <text
+                      x={x}
+                      y={chartHeight + 20}
+                      textAnchor="middle"
+                      fontSize="11"
+                      fill="#64748b"
+                      fontWeight="600"
+                    >
+                      {d.name}
+                    </text>
+                  </g>
+                );
+              })}
+            </svg>
+          </div>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.25 }}
+          className="card !p-5"
+        >
+          <h2 className="font-bold text-slate-900 mb-4 flex items-center gap-2">
+            <CheckCircle2 size={18} className="text-emerald-600" /> Key Results
+          </h2>
+          <div className="space-y-3 text-sm">
+            <div className="flex justify-between items-center py-1 border-b border-slate-50 last:border-0">
+              <span className="text-slate-500">Occupancy Rate</span>
+              <span className="font-bold text-slate-900">
+                {data.occupancyRate}%
+              </span>
+            </div>
+            <div className="flex justify-between items-center py-1 border-b border-slate-50 last:border-0">
+              <span className="text-slate-500">Rent Collection Rate</span>
+              <span className="font-bold text-slate-900">
+                {Math.round((data.totalRentPaid / data.totalRentDue) * 100)}%
+              </span>
+            </div>
+            <div className="flex justify-between items-center py-1 border-b border-slate-50 last:border-0">
+              <span className="text-slate-500">Utility Collection Rate</span>
+              <span className="font-bold text-slate-900">
+                {Math.round((data.totalUtilPaid / data.totalUtilBilled) * 100)}%
+              </span>
+            </div>
+            <div className="flex justify-between items-center py-1 border-b border-slate-50 last:border-0">
+              <span className="text-slate-500">Overdue Tenants</span>
+              <span className="font-bold text-rose-600">
+                {data.overdueList.length}
+              </span>
+            </div>
+            <div className="flex justify-between items-center py-1 border-b border-slate-50 last:border-0">
+              <span className="text-slate-500">Uncollected Bills</span>
+              <span className="font-bold text-rose-600">
+                ₱
+                {(
+                  data.totalRentDue -
+                  data.totalRentPaid +
+                  data.totalUtilUnpaid
+                ).toLocaleString()}
+              </span>
+            </div>
+            <div className="flex justify-between items-center pt-2 border-t border-slate-100">
+              <span className="text-slate-900 font-bold">Net Cash Flow</span>
+              <span className="font-extrabold text-emerald-600">
+                ₱{data.netIncome.toLocaleString()}
+              </span>
+            </div>
+          </div>
+        </motion.div>
+      </div>
+
+      {/* ── OVERDUE TENANTS TABLE ── */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3 }}
+        className="card !p-0 overflow-hidden"
+      >
+        <div className="p-4 border-b border-slate-100 bg-slate-50 flex items-center justify-between">
+          <h2 className="font-bold text-slate-900">
+            Action Required: Overdue Tenants
+          </h2>
+          <button
+            onClick={() => navigate('/admin/rent')}
+            className="text-xs font-semibold text-indigo-600 hover:underline"
+          >
+            View All
+          </button>
+        </div>
+        {data.overdueList.length === 0 ? (
+          <div className="p-8 text-center text-slate-500 text-sm">
+            <CheckCircle2 size={32} className="mx-auto text-emerald-400 mb-2" />
+            No overdue tenants. Great job!
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm text-left">
+              <thead className="text-xs text-slate-500 uppercase bg-slate-50 border-b border-slate-100">
+                <tr>
+                  <th className="px-4 py-3 font-semibold">Tenant</th>
+                  <th className="px-4 py-3 font-semibold">Room</th>
+                  <th className="px-4 py-3 font-semibold text-right">Rent Due</th>
+                  <th className="px-4 py-3 font-semibold text-right">Paid</th>
+                  <th className="px-4 py-3 font-semibold text-right text-rose-600">
+                    Overdue
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {data.overdueList.map((r, i) => (
+                  <tr key={i} className="hover:bg-slate-50/50">
+                    <td className="px-4 py-3 font-medium text-slate-900">
+                      {r.tenantName}
+                    </td>
+                    <td className="px-4 py-3 text-slate-600">{r.roomNumber}</td>
+                    <td className="px-4 py-3 text-right text-slate-600">
+                      ₱{r.amountDue.toLocaleString()}
+                    </td>
+                    <td className="px-4 py-3 text-right text-slate-600">
+                      ₱{r.amountPaid.toLocaleString()}
+                    </td>
+                    <td className="px-4 py-3 text-right font-bold text-rose-600">
+                      ₱{r.balance.toLocaleString()}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
-      </div>
+      </motion.div>
     </div>
   );
 }

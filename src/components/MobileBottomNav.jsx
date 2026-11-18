@@ -2,6 +2,7 @@ import { NavLink, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   LayoutDashboard, DoorOpen, Users, Wallet, TrendingUp,
+  CalendarClock, Heart, Megaphone
 } from 'lucide-react';
 
 export default function MobileBottomNav({ user }) {
@@ -20,11 +21,15 @@ export default function MobileBottomNav({ user }) {
     { to: '/caretaker', icon: LayoutDashboard, label: 'Home', end: true },
     { to: '/caretaker/tenants', icon: Users, label: 'Tenants' },
     { to: '/caretaker/rent', icon: Wallet, label: 'Rent' },
+    { to: '/caretaker/announcements', icon: Megaphone, label: 'News' }, // <-- NEW
   ];
 
   const tenantLinks = [
     { to: '/tenant', icon: LayoutDashboard, label: 'Home', end: true },
+    { to: '/tenant/bookings', icon: CalendarClock, label: 'Bookings' }, // Added for better nav
+    { to: '/tenant/announcements', icon: Megaphone, label: 'News' }, // <-- NEW
     { to: '/tenant/pay', icon: Wallet, label: 'Pay' },
+    { to: '/tenant/favorites', icon: Heart, label: 'Saved' }, // Added for better nav
   ];
 
   const links = role === 'admin' ? adminLinks : role === 'caretaker' ? caretakerLinks : tenantLinks;
@@ -41,7 +46,7 @@ export default function MobileBottomNav({ user }) {
               key={to}
               to={to}
               end={end}
-              className="relative flex flex-col items-center justify-center gap-0.5 py-2 px-3 min-w-[56px]"
+              className="relative flex flex-col items-center justify-center gap-0.5 py-2 px-2 min-w-[56px]"
             >
               {isActive && (
                 <motion.div

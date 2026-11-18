@@ -1,5 +1,6 @@
 // src/services/seedData.js
-// Populates the NearBai system with massive demo data across Mindanao.
+// Populates the NearBai system with the exact demo data for November 2026
+// as specified in the "NearBai Simulation Dataset" image.
 
 import { ensureSeeded, getRoomImage } from './localDB';
 
@@ -18,86 +19,6 @@ const KEYS = {
   FAVORITES: 'nb_favorites',
 };
 
-const FIRST_NAMES = [
-  'Juan', 'Maria', 'Jose', 'Ana', 'Pedro', 'Rosa', 'Carlos', 'Lucia', 'Miguel', 'Sofia',
-  'Mark', 'Jane', 'Ryan', 'Grace', 'Paolo', 'Mika', 'Daniel', 'Angela', 'Rafael', 'Camille',
-  'Alex', 'Chloe', 'James', 'Patricia', 'Liam', 'Isabella', 'Gabriel', 'Bianca', 'Nico', 'Nicole',
-  'Kenneth', 'Trisha', 'Jomar', 'Kim', 'Aldrin', 'Shara', 'Renz', 'Alyssa', 'Jayson', 'Diana',
-  'Karl', 'Mariel', 'Jayson', 'Rhea', 'Bryan', 'Ivy', 'Joshua', 'Kate', 'Matthew', 'Yna',
-  'Andres', 'Gabriela', 'Emilio', 'Apolinario', 'Melchora', 'Lapu-Lapu', 'Josefa', 'Marcelo'
-];
-
-const LAST_NAMES = [
-  'Dela Cruz', 'Santos', 'Reyes', 'Cruz', 'Bautista', 'Garcia', 'Mendoza', 'Torres', 'Ramos', 'Villanueva',
-  'Aquino', 'Domingo', 'Navarro', 'Rivera', 'Rosales', 'Pascual', 'Aguilar', 'Castillo', 'Flores', 'Gonzales',
-  'Lopez', 'Perez', 'Tan', 'Lim', 'Sy', 'Ong', 'Chua', 'Uy', 'Co', 'Go',
-  'Bacani', 'Salazar', 'Marquez', 'Aguirre', 'Panganiban', 'Dimaculangan', 'Espiritu', 'Manalo', 'Villamor', 'Cabrera',
-  'Bonifacio', 'Silang', 'Luna', 'Mabini', 'Del Pilar', 'Jacinto', 'Quezon', 'Osmena', 'Roxas', 'Magsaysay'
-];
-
-// 10 major cities in Mindanao, 2 branches per city = 20 branches.
-// Zamboanga removed. Kidapawan now has 2 branches.
-const MINDANAO_BRANCHES = [
-  // Davao City
-  { name: 'Davao Main (Bajada)', address: '123 J.P. Laurel Ave, Bajada, Davao City', city: 'Davao City' },
-  { name: 'Davao Annex (Matina)', address: '456 McArthur Highway, Matina, Davao City', city: 'Davao City' },
-  
-  // Cagayan de Oro
-  { name: 'CDO Main (Divisoria)', address: '789 Corrales Ave, Divisoria, Cagayan de Oro', city: 'Cagayan de Oro' },
-  { name: 'CDO Annex (Carmen)', address: '12 Velez St, Carmen, Cagayan de Oro', city: 'Cagayan de Oro' },
-  
-  // General Santos
-  { name: 'GenSan Main (Pioneer)', address: '45 Pioneer Ave, General Santos City', city: 'General Santos' },
-  { name: 'GenSan Annex (Lagao)', address: '88 Santiago Blvd, Lagao, General Santos City', city: 'General Santos' },
-  
-  // Butuan City
-  { name: 'Butuan Main (Libertad)', address: '67 J.C. Aquino Ave, Libertad, Butuan City', city: 'Butuan City' },
-  { name: 'Butuan Annex (Baan)', address: '33 Baan Km 3, Butuan City', city: 'Butuan City' },
-  
-  // Iligan City
-  { name: 'Iligan Main (Poblacion)', address: '99 Quezon Ave, Poblacion, Iligan City', city: 'Iligan City' },
-  { name: 'Iligan Annex (Tibanga)', address: '44 Tibanga Highway, Iligan City', city: 'Iligan City' },
-  
-  // Cotabato City
-  { name: 'Cotabato Main (Sinsuat)', address: '12 Sinsuat Ave, Cotabato City', city: 'Cotabato City' },
-  { name: 'Cotabato Annex (Rosary)', address: '56 Rosary Heights, Cotabato City', city: 'Cotabato City' },
-  
-  // Surigao City
-  { name: 'Surigao Main (Borromeo)', address: '78 Borromeo St, Surigao City', city: 'Surigao City' },
-  { name: 'Surigao Annex (Luna)', address: '23 Luna St, Surigao City', city: 'Surigao City' },
-  
-  // Kidapawan City (2 branches)
-  { name: 'Kidapawan Main (Poblacion)', address: '34 Quezon Blvd, Poblacion, Kidapawan City', city: 'Kidapawan City' },
-  { name: 'Kidapawan Annex (Magsaysay)', address: '89 Magsaysay St, Kidapawan City', city: 'Kidapawan City' },
-  
-  // Tagum City
-  { name: 'Tagum Main (Rizal)', address: '12 Rizal St, Tagum City', city: 'Tagum City' },
-  { name: 'Tagum Annex (Mabini)', address: '55 Mabini St, Tagum City', city: 'Tagum City' },
-  
-  // Digos City (Added to replace Zamboanga's 2 branches)
-  { name: 'Digos Main (Rizal Ave)', address: '56 Rizal Ave, Digos City', city: 'Digos City' },
-  { name: 'Digos Annex (Mabini Ext)', address: '78 Mabini Ext, Digos City', city: 'Digos City' },
-];
-
-const ANNOUNCEMENTS = [
-  { title: 'Water interruption on Saturday', body: 'Scheduled maintenance on Nov 23, 8am–12nn. Please store water.', priority: 'important' },
-  { title: 'Monthly rent due reminder', body: 'Rent is due every 5th of the month. Late payments incur a ₱200 penalty.', priority: 'normal' },
-  { title: 'New CCTV installed', body: 'Security cameras have been installed at all entrances for your safety.', priority: 'normal' },
-  { title: 'Fire drill this Friday', body: 'Mandatory fire drill at 3pm. Please cooperate.', priority: 'urgent' },
-];
-
-const EXPENSES = [
-  { description: 'Repaired leaking roof', category: 'repair', amount: 3500 },
-  { description: 'Monthly water bill (building total)', category: 'utilities', amount: 2800 },
-  { description: 'Caretaker salary', category: 'salary', amount: 8000 },
-  { description: 'Bought new bedsheets (5 sets)', category: 'supplies', amount: 1750 },
-  { description: 'Real property tax Q4', category: 'tax', amount: 12500 },
-  { description: 'Replaced broken faucet', category: 'repair', amount: 480 },
-  { description: 'WiFi monthly subscription', category: 'utilities', amount: 1699 },
-  { description: 'Repainted hallway', category: 'repair', amount: 2200 },
-];
-
-// Helpers
 const read = (k, f = []) => {
   try {
     const v = localStorage.getItem(k);
@@ -106,22 +27,11 @@ const read = (k, f = []) => {
 };
 const write = (k, v) => localStorage.setItem(k, JSON.stringify(v));
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
-const rand = (arr) => arr[Math.floor(Math.random() * arr.length)];
-const randInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
-const randPhone = () => `09${randInt(10, 99)}${randInt(1000000, 9999999)}`;
-const randEmail = (first, last, idx) => `${first.toLowerCase()}.${last.toLowerCase()}${idx}@example.com`;
 
-function randomDateWithinPastYears(yearsBack = 2) {
-  const now = new Date();
-  const past = new Date();
-  past.setFullYear(now.getFullYear() - yearsBack);
-  const ts = past.getTime() + Math.random() * (now.getTime() - past.getTime());
-  return new Date(ts);
-}
-
-function formatDate(d) {
-  return d.toISOString().split('T')[0];
-}
+// Helper to generate dates in November 2026
+const getDateInNov2026 = (day, hour = 10) => {
+  return new Date(2026, 10, day, hour, 0, 0).toISOString(); // Month 10 is November
+};
 
 export function seedDemoData() {
   ensureSeeded();
@@ -129,232 +39,315 @@ export function seedDemoData() {
   const admin = users.find(u => u.role === 'admin');
   if (!admin) throw new Error('Admin account not found');
 
-  // 1. Create 20 branches in Mindanao
-  const housesArr = MINDANAO_BRANCHES.map(b => ({
-    id: uid(),
-    name: b.name,
-    address: b.address,
-    city: b.city,
-    contactNumber: randPhone(),
+  // 1. Create the Branch
+  const houseId = uid();
+  const house = {
+    id: houseId,
+    name: 'NearBai Main Branch',
+    address: 'Poblacion, Kidapawan City, Cotabato',
+    city: 'Kidapawan City',
+    contactNumber: '09123456789',
     imageUrl: '',
-    createdAt: new Date().toISOString(),
-  }));
-  write(KEYS.HOUSES, housesArr);
-  write(KEYS.CURRENT_HOUSE, housesArr[0].id);
+    createdAt: getDateInNov2026(1),
+  };
+  write(KEYS.HOUSES, [house]);
+  write(KEYS.CURRENT_HOUSE, houseId);
 
-  // 2. Create rooms per branch (30-40 rooms per branch)
-  const allRooms = [];
-  housesArr.forEach((house) => {
-    const roomCount = randInt(30, 40); 
-    for (let i = 1; i <= roomCount; i++) {
-      const isFemale = Math.random() > 0.5;
-      const roomId = uid();
-      allRooms.push({
-        id: roomId,
-        houseId: house.id,
-        roomNumber: `${100 + i}`, 
-        bedCapacity: randInt(4, 8), 
-        monthlyRate: randInt(3, 8) * 1000, 
-        gender: isFemale ? 'female' : 'male',
-        notes: Math.random() > 0.7 ? 'Air-conditioned' : '',
-        imageUrl: getRoomImage(roomId),
-        createdAt: new Date().toISOString(),
-      });
-    }
+  admin.houseIds = [houseId];
+  write(KEYS.USERS, users);
+
+  // 2. Create Rooms (Exact match to Table A)
+  const roomsConfig = [
+    { number: 'M101', type: 'Male', beds: 2, rate: 5000 },
+    { number: 'M102', type: 'Male', beds: 3, rate: 7500 },
+    { number: 'M103', type: 'Male', beds: 3, rate: 7500 },
+    { number: 'F101', type: 'Female', beds: 3, rate: 7500 },
+    { number: 'F102', type: 'Female', beds: 4, rate: 9500 },
+    { number: 'F103', type: 'Female', beds: 3, rate: 7500 },
+  ];
+
+  const allRooms = roomsConfig.map(cfg => {
+    const roomId = uid();
+    return {
+      id: roomId,
+      houseId,
+      roomNumber: cfg.number,
+      bedCapacity: cfg.beds,
+      monthlyRate: cfg.rate,
+      gender: cfg.type.toLowerCase(),
+      notes: '',
+      imageUrl: getRoomImage(roomId),
+      createdAt: getDateInNov2026(1),
+    };
   });
   write(KEYS.ROOMS, allRooms);
 
-  // 3. Create tenants (~7,000+)
+  // Helper to find room by number
+  const getRoom = (num) => allRooms.find(r => r.roomNumber === num);
+
+  // 3. Create Tenants (Match Table B occupancy)
+  const tenantsConfig = [
+    // M101 - 2 Occupied
+    { room: 'M101', name: 'Tenant M01' },
+    { room: 'M101', name: 'Tenant M02' },
+    // M102 - 2 Occupied, 1 Vacant (Tenant M04 is the overdue one)
+    { room: 'M102', name: 'Tenant M03' },
+    { room: 'M102', name: 'Tenant M04' }, 
+    // M103 - 3 Occupied
+    { room: 'M103', name: 'Tenant M05' },
+    { room: 'M103', name: 'Tenant M06' },
+    { room: 'M103', name: 'Tenant M07' },
+    // F101 - 3 Occupied
+    { room: 'F101', name: 'Tenant F01' },
+    { room: 'F101', name: 'Tenant F02' },
+    { room: 'F101', name: 'Tenant F03' },
+    // F102 - 3 Occupied, 1 Vacant (Tenant F06 is the overdue one)
+    { room: 'F102', name: 'Tenant F04' },
+    { room: 'F102', name: 'Tenant F05' },
+    { room: 'F102', name: 'Tenant F06' },
+    // F103 - 3 Occupied
+    { room: 'F103', name: 'Tenant F07' },
+    { room: 'F103', name: 'Tenant F08' },
+    { room: 'F103', name: 'Tenant F09' },
+  ];
+
   const allTenants = [];
   const newUsers = [];
-  let globalTenantCounter = 1;
 
-  for (const room of allRooms) {
-    // Fill 60-90% of the room capacity
-    const fillCount = randInt(Math.ceil(room.bedCapacity * 0.6), room.bedCapacity); 
+  tenantsConfig.forEach((t, idx) => {
+    const id = uid();
+    const room = getRoom(t.room);
+    const email = `${t.name.replace(/\s/g, '').toLowerCase()}@example.com`;
     
-    for (let i = 0; i < fillCount; i++) {
-      const first = rand(FIRST_NAMES);
-      const last = rand(LAST_NAMES);
-      const fullName = `${first} ${last}`;
-      const email = randEmail(first, last, globalTenantCounter);
-      const phone = randPhone();
-      const moveIn = randomDateWithinPastYears(1.5);
-      const id = uid();
+    newUsers.push({
+      id,
+      name: t.name,
+      email,
+      password: 'Tenant123!',
+      role: 'tenant',
+      houseIds: [houseId],
+      phone: `0912345678${idx}`,
+      roomId: room.id,
+      moveInDate: '2026-10-15',
+      status: 'occupied',
+      createdAt: getDateInNov2026(1),
+    });
 
-      const tenant = {
-        id,
-        name: fullName,
-        email,
-        password: 'Tenant123!',
-        role: 'tenant',
-        houseIds: [room.houseId],
-        phone,
-        emergencyContact: `${rand(FIRST_NAMES)} ${rand(LAST_NAMES)} — ${randPhone()}`,
-        roomId: room.id,
-        moveInDate: formatDate(moveIn),
-        status: 'occupied',
-        createdAt: moveIn.toISOString(),
-      };
-      newUsers.push(tenant);
-      allTenants.push({
-        id,
-        name: fullName,
-        email,
-        phone,
-        emergencyContact: tenant.emergencyContact,
-        roomId: room.id,
-        moveInDate: tenant.moveInDate,
-        status: 'occupied',
-        createdAt: tenant.createdAt,
-      });
-      globalTenantCounter++;
-    }
-  }
+    allTenants.push({
+      id,
+      name: t.name,
+      email,
+      phone: `0912345678${idx}`,
+      emergencyContact: 'Contact Person - 09999999999',
+      roomId: room.id,
+      moveInDate: '2026-10-15',
+      status: 'occupied',
+      createdAt: getDateInNov2026(1),
+    });
+  });
+
   write(KEYS.USERS, [...users, ...newUsers]);
   write(KEYS.TENANTS, allTenants);
 
-  // 4. Generate rent payments (1 month history to save space)
+  // 4. Generate Rent Payments (Match Table C & D)
   const allRents = [];
-  const now = new Date();
-  allTenants.forEach((t) => {
-    const room = allRooms.find(r => r.id === t.roomId);
-    const roommates = allTenants.filter(x => x.roomId === t.roomId).length;
-    const perTenant = Math.ceil(room.monthlyRate / roommates);
-    const moveIn = new Date(t.moveInDate);
-    const billingDate = new Date(now.getFullYear(), now.getMonth(), 1);
-    
-    if (billingDate >= moveIn) {
-      const dueDate = new Date(billingDate.getFullYear(), billingDate.getMonth(), moveIn.getDate());
-      const roll = Math.random();
-      let amountPaid = 0;
-      let paidAt = null;
-      let method = null;
-      
-      if (roll < 0.6) { amountPaid = perTenant; paidAt = new Date(billingDate).toISOString(); method = ['cash', 'gcash', 'bank'][randInt(0, 2)]; }
-      else if (roll < 0.8) { amountPaid = Math.ceil(perTenant / 2); paidAt = new Date(billingDate).toISOString(); method = 'cash'; }
+  
+  // Rent Billed / Collected Mapping
+  const rentPaymentMap = {
+    'M101': { billed: 5000, collected: 5000 },
+    'M102': { billed: 5000, collected: 2500, note: 'Tenant M04 owes 2500' },
+    'M103': { billed: 7500, collected: 7500 },
+    'F101': { billed: 7500, collected: 7500 },
+    'F102': { billed: 7125, collected: 5750, note: 'Tenant F06 owes 1375' },
+    'F103': { billed: 7500, collected: 7500 },
+  };
 
-      allRents.push({
-        id: uid(),
-        tenantId: t.id,
-        billingMonth: billingDate.toLocaleString('en-PH', { month: 'long', year: 'numeric' }),
-        dueDate: formatDate(dueDate),
-        amountDue: perTenant,
-        amountPaid,
-        paymentMethod: method,
-        orNumber: amountPaid > 0 ? `OR-${randInt(100000, 999999)}` : '',
-        notes: '',
-        createdAt: billingDate.toISOString(),
-        paidAt,
-      });
+  allTenants.forEach(t => {
+    const room = allRooms.find(r => r.id === t.roomId);
+    const payInfo = rentPaymentMap[room.roomNumber];
+    
+    // Calculate how much this specific tenant paid
+    let amountPaid = payInfo.collected;
+    let note = '';
+    
+    // Specific overrides for the delinquent tenants
+    if (t.name === 'Tenant M04') {
+      amountPaid = 0;
+      note = 'Unpaid rent';
+    } else if (t.name === 'Tenant F06') {
+      amountPaid = 1000; // Billed 2375, Paid 1000, Owed 1375
+      note = 'Partial payment';
+    } else {
+      // For other tenants in the room, they paid their share
+      const roommates = allTenants.filter(x => x.roomId === room.id).length;
+      const perPerson = Math.ceil(payInfo.billed / roommates);
+      amountPaid = perPerson; 
     }
+
+    const perPersonDue = Math.ceil(payInfo.billed / allTenants.filter(x => x.roomId === room.id).length);
+
+    allRents.push({
+      id: uid(),
+      tenantId: t.id,
+      billingMonth: 'November 2026',
+      dueDate: '2026-11-05',
+      amountDue: perPersonDue,
+      amountPaid: amountPaid,
+      paymentMethod: amountPaid > 0 ? 'cash' : null,
+      orNumber: amountPaid > 0 ? `OR-2026${Math.floor(Math.random()*1000)}` : '',
+      notes: note,
+      createdAt: getDateInNov2026(2),
+      paidAt: amountPaid > 0 ? getDateInNov2026(3) : null,
+    });
   });
   write(KEYS.RENT_PAYMENTS, allRents);
 
-  // 5. Generate utility charges (1 month history)
+  // 5. Generate Utility Charges (Match Table E)
   const allUtils = [];
-  allTenants.forEach((t) => {
-    const roommates = allTenants.filter(x => x.roomId === t.roomId).length;
-    const billingDate = new Date(now.getFullYear(), now.getMonth(), 1);
+  const utilMap = {
+    'M101': { tenants: 2, elec: 360, water: 240 },
+    'M102': { tenants: 2, elec: 360, water: 240 },
+    'M103': { tenants: 3, elec: 540, water: 360 },
+    'F101': { tenants: 3, elec: 540, water: 360 },
+    'F102': { tenants: 3, elec: 540, water: 360 },
+    'F103': { tenants: 3, elec: 540, water: 360 },
+  };
+
+  allTenants.forEach(t => {
+    const room = allRooms.find(r => r.id === t.roomId);
+    const utilInfo = utilMap[room.roomNumber];
     
-    if (billingDate >= new Date(t.moveInDate)) {
-      allUtils.push({
-        id: uid(),
-        tenantId: t.id,
-        chargeType: 'electricity',
-        amountBilled: Math.ceil(randInt(800, 3000) / roommates),
-        billingPeriod: billingDate.toLocaleString('en-PH', { month: 'long', year: 'numeric' }),
-        status: Math.random() > 0.4 ? 'paid' : 'unpaid',
-        notes: '',
-        createdAt: billingDate.toISOString(),
-      });
-      allUtils.push({
-        id: uid(),
-        tenantId: t.id,
-        chargeType: 'water',
-        amountBilled: Math.ceil(randInt(200, 600) / roommates),
-        billingPeriod: billingDate.toLocaleString('en-PH', { month: 'long', year: 'numeric' }),
-        status: Math.random() > 0.4 ? 'paid' : 'unpaid',
-        notes: '',
-        createdAt: billingDate.toISOString(),
-      });
-    }
+    allUtils.push({
+      id: uid(),
+      tenantId: t.id,
+      chargeType: 'electricity',
+      amountBilled: utilInfo.elec / utilInfo.tenants,
+      billingPeriod: 'November 2026',
+      status: 'paid',
+      notes: '',
+      createdAt: getDateInNov2026(5),
+    });
+
+    allUtils.push({
+      id: uid(),
+      tenantId: t.id,
+      chargeType: 'water',
+      amountBilled: utilInfo.water / utilInfo.tenants,
+      billingPeriod: 'November 2026',
+      status: 'paid',
+      notes: '',
+      createdAt: getDateInNov2026(5),
+    });
   });
   write(KEYS.UTILITY_CHARGES, allUtils);
 
-  // 6. Generate expenses (4 per branch)
-  const allExpenses = [];
-  housesArr.forEach((h) => {
-    EXPENSES.slice(0, 4).forEach((e) => {
-      const d = randomDateWithinPastYears(0.5);
-      allExpenses.push({
-        id: uid(),
-        houseId: h.id,
-        description: e.description,
-        category: e.category,
-        amount: e.amount,
-        dateLogged: formatDate(d),
-        createdAt: d.toISOString(),
-      });
-    });
-  });
+  // 6. Generate Expenses (Match Table F)
+  const expensesConfig = [
+    { desc: 'Electricity bill', amount: 2600 },
+    { desc: 'Water bill', amount: 1100 },
+    { desc: 'Internet', amount: 1200 },
+    { desc: 'Cleaning', amount: 900 },
+    { desc: 'Maintenance', amount: 650 },
+    { desc: 'Cleaning supplies', amount: 450 },
+  ];
+
+  const allExpenses = expensesConfig.map(e => ({
+    id: uid(),
+    houseId,
+    description: e.desc,
+    category: 'utilities',
+    amount: e.amount,
+    dateLogged: '2026-11-30',
+    createdAt: getDateInNov2026(30),
+  }));
   write(KEYS.EXPENSES, allExpenses);
 
-  // 7. Generate announcements (2 per branch)
-  const allAnnouncements = [];
-  housesArr.forEach((h) => {
-    ANNOUNCEMENTS.slice(0, 2).forEach((a) => {
-      const d = randomDateWithinPastYears(0.3);
-      allAnnouncements.push({
-        id: uid(),
-        houseId: h.id,
-        title: a.title,
-        body: a.body,
-        priority: a.priority,
-        createdAt: d.toISOString(),
-      });
-    });
-  });
-  write(KEYS.ANNOUNCEMENTS, allAnnouncements);
-
-  // 8. Generate pending reservations (1 per branch)
+  // 7. Generate Inquiries / Reservations (Match Table G & H)
   const allReservations = [];
-  housesArr.forEach((h) => {
-    const houseRooms = allRooms.filter(r => r.houseId === h.id);
-    const room = rand(houseRooms);
-    if (!room) return;
-
-    const first = rand(FIRST_NAMES);
-    const last = rand(LAST_NAMES);
-    const d = randomDateWithinPastYears(0.1);
+  
+  // Week 1: 5 Total, 2 Qualified
+  for(let i=0; i<5; i++) {
     allReservations.push({
       id: uid(),
-      reference: 'NBR-' + Math.random().toString(36).slice(2, 7).toUpperCase(),
-      houseId: h.id,
-      roomId: room.id,
-      fullName: `${first} ${last}`,
-      phone: randPhone(),
-      email: `${first.toLowerCase()}.${last.toLowerCase()}@gmail.com`,
-      moveInDate: formatDate(new Date(Date.now() + randInt(1, 30) * 86400000)),
-      notes: 'Looking for a quiet place near the university.',
-      status: 'pending',
-      createdAt: d.toISOString(),
+      reference: 'NBR-W1' + i,
+      houseId,
+      roomId: allRooms[0].id,
+      fullName: `Inquirer W1-${i}`,
+      phone: '09111111111',
+      email: `w1-${i}@example.com`,
+      moveInDate: '2026-12-01',
+      notes: '',
+      status: i < 2 ? 'approved' : 'rejected',
+      createdAt: getDateInNov2026(3),
     });
-  });
+  }
+
+  // Week 2: 7 Total, 3 Qualified
+  for(let i=0; i<7; i++) {
+    allReservations.push({
+      id: uid(),
+      reference: 'NBR-W2' + i,
+      houseId,
+      roomId: allRooms[0].id,
+      fullName: `Inquirer W2-${i}`,
+      phone: '09222222222',
+      email: `w2-${i}@example.com`,
+      moveInDate: '2026-12-01',
+      notes: '',
+      status: i < 3 ? 'approved' : 'rejected',
+      createdAt: getDateInNov2026(10),
+    });
+  }
+
+  // Week 3: 8 Total, 4 Qualified
+  for(let i=0; i<8; i++) {
+    allReservations.push({
+      id: uid(),
+      reference: 'NBR-W3' + i,
+      houseId,
+      roomId: allRooms[0].id,
+      fullName: `Inquirer W3-${i}`,
+      phone: '09333333333',
+      email: `w3-${i}@example.com`,
+      moveInDate: '2026-12-01',
+      notes: '',
+      status: i < 4 ? 'approved' : 'rejected',
+      createdAt: getDateInNov2026(17),
+    });
+  }
+
+  // Week 4: 10 Total, 6 Qualified
+  for(let i=0; i<10; i++) {
+    allReservations.push({
+      id: uid(),
+      reference: 'NBR-W4' + i,
+      houseId,
+      roomId: allRooms[0].id,
+      fullName: `Inquirer W4-${i}`,
+      phone: '09444444444',
+      email: `w4-${i}@example.com`,
+      moveInDate: '2026-12-01',
+      notes: '',
+      status: i < 6 ? 'approved' : 'rejected',
+      createdAt: getDateInNov2026(24),
+    });
+  }
+
   write(KEYS.RESERVATIONS, allReservations);
 
+  // Clear other arrays
   write(KEYS.BOOKINGS, []);
   write(KEYS.FAVORITES, []);
+  write(KEYS.ANNOUNCEMENTS, []);
 
   return {
-    branches: housesArr.length,
+    branches: 1,
     rooms: allRooms.length,
     tenants: allTenants.length,
     rentRecords: allRents.length,
     utilityRecords: allUtils.length,
     expenses: allExpenses.length,
-    announcements: allAnnouncements.length,
-    reservations: allReservations.length,
+    inquiries: allReservations.length,
   };
 }
 

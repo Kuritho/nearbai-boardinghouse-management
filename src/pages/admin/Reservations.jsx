@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import {
   Search, CheckCircle2, XCircle, Loader2, Phone, Home, Clock,
-  AlertTriangle, BedDouble,
+  CalendarDays, ThumbsUp, ThumbsDown, UserCheck
 } from 'lucide-react';
 import Modal from '../../components/Modal';
 import StatusBadge from '../../components/StatusBadge';
@@ -14,30 +14,29 @@ export default function Reservations() {
   const [filterStatus, setFilterStatus] = useState('pending');
   const [review, setReview] = useState(null);
   const [actionLoading, setActionLoading] = useState(false);
-  const [rejectReason, setRejectReason] = useState('');
-  const [showReject, setShowReject] = useState(false);
-  const [tempPassword, setTempPassword] = useState('Tenant123!');
+  const [reason, setReason] = useState('');
+  const [showNotQualified, setShowNotQualified] = useState(false);
   const toast = useToast();
 
   const load = () => {
     const c = houses.current();
     if (c) setItems(reservations.list(c.id));
   };
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    load();
+  }, []);
 
   const openReview = (r) => {
     setReview(r);
-    setRejectReason('');
-    setShowReject(false);
-    setTempPassword('Tenant123!');
+    setReason('');
+    setShowNotQualified(false);
   };
 
-  const handleApprove = () => {
-    if (!tempPassword || tempPassword.length < 6) return toast('Password needs 6+ chars', 'error');
+  const handleQualify = () => {
     setActionLoading(true);
     try {
-      reservations.approve(review.id, tempPassword, review.type);
-      toast('Approved — tenant created', 'success');
+      reservations.qualify(review.id, true, '');
+      toast('Inquiry marked as Qualified', 'success');
       setReview(null);
       load();
     } catch (err) {
@@ -47,12 +46,12 @@ export default function Reservations() {
     }
   };
 
-  const handleReject = () => {
-    if (!rejectReason.trim()) return toast('Please provide a reason', 'error');
+  const handleNotQualified = () => {
+    if (!reason.trim()) return toast('Please provide a reason', 'error');
     setActionLoading(true);
     try {
-      reservations.reject(review.id, rejectReason, review.type);
-      toast('Rejected', 'success');
+      reservations.qualify(review.id, false, reason);
+      toast('Inquiry marked as Not Qualified', 'success');
       setReview(null);
       load();
     } catch (err) {
@@ -66,14 +65,37 @@ export default function Reservations() {
     const term = search.toLowerCase();
     const nameMatch = (r.fullName || '').toLowerCase().includes(term);
     const refMatch = (r.reference || '').toLowerCase().includes(term);
-    return (nameMatch || refMatch) && (filterStatus === 'all' || r.status === filterStatus);
+    return (
+      (nameMatch || refMatch) &&
+      (filterStatus === 'all' || r.status === filterStatus)
+    );
   });
+
+  // Group by Week for the UI (matches dataset Table H)
+  const getWeekLabel = (dateString) => {
+    const d = new Date(dateString);
+    const day = d.getDate();
+    if (day <= 7) return 'Week 1 (Nov 1-7)';
+    if (day <= 14) return 'Week 2 (Nov 8-14)';
+    if (day <= 21) return 'Week 3 (Nov 15-21)';
+    return 'Week 4 (Nov 22-30)';
+  };
+  const grouped = filtered.reduce((acc, curr) => {
+    const week = getWeekLabel(curr.createdAt);
+    if (!acc[week]) acc[week] = [];
+    acc[week].push(curr);
+    return acc;
+  }, {});
 
   return (
     <div>
       <div className="mb-5">
-        <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">Reservations</h1>
-        <p className="text-slate-600 text-sm mt-1">Review guest requests and tenant bookings</p>
+        <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
+          Inquiries & Reservations
+        </h1>
+        <p className="text-slate-600 text-sm mt-1">
+          Review applicant rental readiness and qualify inquiries.
+        </p>
       </div>
 
       <div className="space-y-2 mb-4">
@@ -87,64 +109,73 @@ export default function Reservations() {
           />
         </div>
         <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
-          {['pending', 'approved', 'rejected', 'all'].map((s) => (
-            <button
-              key={s}
-              onClick={() => setFilterStatus(s)}
-              className={`chip capitalize ${
-                filterStatus === s
-                  ? 'bg-indigo-600 text-white border-indigo-700'
-                  : 'bg-white text-slate-600 border-slate-200'
-              }`}
-            >
-              {s}
-            </button>
-          ))}
+          {['pending', 'qualified', 'not_qualified', 'approved', 'all'].map(
+            (s) => (
+              <button
+                key={s}
+                onClick={() => setFilterStatus(s)}
+                className={`chip capitalize ${
+                  filterStatus === s
+                    ? 'bg-indigo-600 text-white border-indigo-700'
+                    : 'bg-white text-slate-600 border-slate-200'
+                }`}
+              >
+                {s.replace('_', ' ')}
+              </button>
+            )
+          )}
         </div>
       </div>
 
       {filtered.length === 0 ? (
         <div className="card text-center py-12">
           <Clock size={40} className="mx-auto text-slate-300 mb-3" />
-          <p className="text-slate-900 font-semibold">No reservations found</p>
-          <p className="text-sm text-slate-500">Try changing the filter or search term.</p>
+          <p className="text-slate-900 font-semibold">No inquiries found</p>
         </div>
       ) : (
-        <div className="space-y-2">
-          {filtered.map((r) => (
-            <button
-              key={r.id}
-              onClick={() => openReview(r)}
-              className="w-full text-left card !p-4 hover:shadow-md transition"
-            >
-              <div className="flex items-start gap-3">
-                <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-white font-bold shadow shrink-0">
-                  {r.fullName?.[0]?.toUpperCase() || '?'}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0">
-                      <p className="font-bold text-slate-900 text-sm truncate">{r.fullName}</p>
-                      <p className="text-xs text-slate-500 font-mono">{r.reference}</p>
+        <div className="space-y-6">
+          {Object.entries(grouped).map(([week, records]) => (
+            <div key={week}>
+              <h3 className="text-sm font-bold text-slate-800 mb-2 flex items-center gap-2">
+                <CalendarDays size={16} className="text-slate-400" /> {week}
+              </h3>
+              <div className="space-y-2">
+                {records.map((r) => (
+                  <button
+                    key={r.id}
+                    onClick={() => openReview(r)}
+                    className="w-full text-left card !p-4 hover:shadow-md transition"
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-white font-bold shadow shrink-0">
+                        {r.fullName?.[0]?.toUpperCase() || '?'}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0">
+                            <p className="font-bold text-slate-900 text-sm truncate">
+                              {r.fullName}
+                            </p>
+                            <p className="text-xs text-slate-500 font-mono">
+                              {r.reference}
+                            </p>
+                          </div>
+                          <StatusBadge status={r.status} />
+                        </div>
+                        <div className="flex flex-wrap gap-2 mt-2">
+                          <span className="chip-violet">
+                            <Home size={11} /> Prefers: {r.preferredRoomType || '—'}
+                          </span>
+                          <span className="chip-slate">
+                            <Phone size={11} /> {r.phone}
+                          </span>
+                        </div>
+                      </div>
                     </div>
-                    <StatusBadge status={r.status} />
-                  </div>
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    <span className="chip-violet">
-                      <Home size={11} /> Room {r.roomNumber}
-                    </span>
-                    {r.bedNumber && (
-                      <span className="chip-amber">
-                        <BedDouble size={11} /> Bed {r.bedNumber}
-                      </span>
-                    )}
-                    <span className="chip-slate">
-                      <Phone size={11} /> {r.phone}
-                    </span>
-                  </div>
-                </div>
+                  </button>
+                ))}
               </div>
-            </button>
+            </div>
           ))}
         </div>
       )}
@@ -152,134 +183,161 @@ export default function Reservations() {
       <Modal
         isOpen={!!review}
         onClose={() => setReview(null)}
-        title={review?.status === 'pending' ? 'Review Request' : 'Details'}
+        title={review?.status === 'pending' ? 'Review Inquiry' : 'Inquiry Details'}
         size="lg"
       >
         {review && (
           <div className="space-y-4">
             <div className="bg-indigo-50 border border-indigo-100 rounded-2xl p-5">
-              <p className="text-xs font-bold text-indigo-700 uppercase mb-1">Reference</p>
-              <p className="text-2xl font-extrabold text-slate-900 font-mono">{review.reference}</p>
+              <p className="text-xs font-bold text-indigo-700 uppercase mb-1">
+                Reference
+              </p>
+              <p className="text-2xl font-extrabold text-slate-900 font-mono">
+                {review.reference}
+              </p>
               <div className="flex items-center gap-2 mt-3">
-                <span className="chip-violet">
-                  <Home size={11} /> Room {review.roomNumber}
-                </span>
-                {review.bedNumber && (
-                  <span className="chip-amber">
-                    <BedDouble size={11} /> Bed {review.bedNumber}
+                <StatusBadge status={review.status} />
+                {review.preferredRoomType && (
+                  <span className="chip-violet text-xs">
+                    Prefers: {review.preferredRoomType}
                   </span>
                 )}
-                <StatusBadge status={review.status} />
               </div>
             </div>
 
             <div className="space-y-2 text-sm bg-slate-50 p-4 rounded-xl border border-slate-100">
               <p>
-                <span className="text-slate-500 w-16 inline-block">Name:</span>{' '}
+                <span className="text-slate-500 w-24 inline-block">Name:</span>{' '}
                 <strong>{review.fullName}</strong>
               </p>
               <p>
-                <span className="text-slate-500 w-16 inline-block">Phone:</span>{' '}
+                <span className="text-slate-500 w-24 inline-block">Phone:</span>{' '}
                 {review.phone}
               </p>
               {review.email && (
                 <p>
-                  <span className="text-slate-500 w-16 inline-block">Email:</span>{' '}
+                  <span className="text-slate-500 w-24 inline-block">Email:</span>{' '}
                   {review.email}
                 </p>
               )}
               <p>
-                <span className="text-slate-500 w-16 inline-block">Move-in:</span>{' '}
+                <span className="text-slate-500 w-24 inline-block">Move-in:</span>{' '}
                 {review.moveInDate}
               </p>
               <p>
-                <span className="text-slate-500 w-16 inline-block">Type:</span>{' '}
-                <span className="capitalize">
-                  {review.type === 'guest' ? 'Online Request' : 'Tenant Booking'}
-                </span>
+                <span className="text-slate-500 w-24 inline-block">
+                  Inquiry for:
+                </span>{' '}
+                {review.roomNumber
+                  ? `Room ${review.roomNumber}`
+                  : 'Any available room'}
               </p>
             </div>
 
             {review.notes && (
               <div className="bg-amber-50 border border-amber-200 rounded-xl p-3">
-                <p className="text-xs font-bold text-amber-800 uppercase mb-1">Notes</p>
+                <p className="text-xs font-bold text-amber-800 uppercase mb-1">
+                  Notes
+                </p>
                 <p className="text-sm text-amber-900">{review.notes}</p>
               </div>
             )}
 
             {review.status === 'pending' && (
               <>
-                <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 flex items-start gap-2">
-                  <AlertTriangle size={14} className="text-amber-600 mt-0.5 shrink-0" />
-                  <p className="text-xs text-amber-800">
-                    Approving will create a tenant account. Use the temporary password below.
+                <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3 flex items-start gap-2">
+                  <UserCheck size={14} className="text-emerald-600 mt-0.5 shrink-0" />
+                  <p className="text-xs text-emerald-800">
+                    <strong>Assess rental readiness.</strong> Mark as{' '}
+                    <strong>Qualified</strong> to add this applicant to the Room
+                    Demand waitlist. Mark as <strong>Not Qualified</strong> if they
+                    cannot proceed.
                   </p>
                 </div>
 
-                <div>
-                  <label className="label">Temporary Password</label>
-                  <input
-                    className="input font-mono"
-                    value={tempPassword}
-                    onChange={(e) => setTempPassword(e.target.value)}
-                  />
-                </div>
-
-                {showReject && (
+                {showNotQualified && (
                   <div>
-                    <label className="label">Reason for Rejection</label>
+                    <label className="label">Reason for Not Qualified</label>
                     <textarea
                       className="input"
                       rows={2}
-                      value={rejectReason}
-                      onChange={(e) => setRejectReason(e.target.value)}
-                      placeholder="e.g. Room is full."
+                      value={reason}
+                      onChange={(e) => setReason(e.target.value)}
+                      placeholder="e.g. Incomplete requirements, room mismatch..."
                     />
                   </div>
                 )}
 
                 <div className="flex gap-3 pt-2 border-t border-slate-100">
-                  {!showReject ? (
+                  {!showNotQualified ? (
                     <>
                       <button
-                        onClick={() => setShowReject(true)}
+                        onClick={() => setShowNotQualified(true)}
                         className="btn-danger flex-1"
                         disabled={actionLoading}
                       >
-                        <XCircle size={16} /> Reject
+                        <ThumbsDown size={16} /> Not Qualified
                       </button>
                       <button
-                        onClick={handleApprove}
+                        onClick={handleQualify}
                         className="btn-success flex-1"
                         disabled={actionLoading}
                       >
                         {actionLoading ? (
                           <Loader2 className="animate-spin" size={16} />
                         ) : (
-                          <CheckCircle2 size={16} />
-                        )}
-                        Approve
+                          <ThumbsUp size={16} />
+                        )}{' '}
+                        Qualified
                       </button>
                     </>
                   ) : (
                     <>
                       <button
-                        onClick={() => setShowReject(false)}
+                        onClick={() => setShowNotQualified(false)}
                         className="btn-secondary flex-1"
                       >
                         Cancel
                       </button>
                       <button
-                        onClick={handleReject}
+                        onClick={handleNotQualified}
                         className="btn-danger flex-1"
-                        disabled={actionLoading || !rejectReason.trim()}
+                        disabled={actionLoading || !reason.trim()}
                       >
-                        Confirm Reject
+                        Confirm Not Qualified
                       </button>
                     </>
                   )}
                 </div>
               </>
+            )}
+
+            {review.status === 'qualified' && (
+              <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex items-center gap-3">
+                <CheckCircle2 size={24} className="text-emerald-600" />
+                <div>
+                  <p className="font-bold text-emerald-900 text-sm">
+                    Qualified Applicant
+                  </p>
+                  <p className="text-xs text-emerald-700">
+                    This applicant now counts toward Room Demand statistics.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {review.status === 'not_qualified' && (
+              <div className="bg-rose-50 border border-rose-200 rounded-xl p-4 flex items-center gap-3">
+                <XCircle size={24} className="text-rose-600" />
+                <div>
+                  <p className="font-bold text-rose-900 text-sm">
+                    Not Qualified
+                  </p>
+                  <p className="text-xs text-rose-700">
+                    Reason: {review.qualificationReason || 'No reason provided'}
+                  </p>
+                </div>
+              </div>
             )}
           </div>
         )}

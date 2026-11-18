@@ -18,7 +18,7 @@ export default function PayBill() {
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
 
-  const [items, setItems] = useState([]); // combined rent + utility "bills"
+  const [items, setItems] = useState([]);
   const [selected, setSelected] = useState([]);
   const [fetching, setFetching] = useState(true);
 
@@ -44,7 +44,6 @@ export default function PayBill() {
         refId: r.id,
         label: `Rent — ${r.billingMonth}`,
         amount: r.balance,
-        dueDate: null,
       }));
     const utils = utilityCharges.listForTenant(user.id)
       .filter((u) => u.status === 'unpaid')
@@ -54,7 +53,6 @@ export default function PayBill() {
         refId: u.id,
         label: `${u.chargeType} — ${u.billingPeriod}`,
         amount: u.amountBilled,
-        dueDate: null,
       }));
     setItems([...rents, ...utils]);
     setOwnerAccounts(settingsDB.get());
@@ -62,11 +60,16 @@ export default function PayBill() {
   }, [user.id]);
 
   const toggleItem = (id) =>
-    setSelected((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]);
+    setSelected((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
 
   const selectedItems = items.filter((i) => selected.includes(i.id));
   const total = selectedItems.reduce((s, i) => s + i.amount, 0);
-  const activeAccount = method && ownerAccounts ? ownerAccounts[method] : null;
+
+  // Resolve active account fields based on method
+  const activeAccount =
+    method && ownerAccounts ? ownerAccounts[method] : null;
 
   const copyToClipboard = async (text, field) => {
     try {
@@ -133,8 +136,6 @@ export default function PayBill() {
     setErrorMsg('');
     setSubmitting(true);
     try {
-      // Create a "submitted payment" — stored as pending rent record(s)
-      // For simplicity, record a partial payment against each selected bill
       selectedItems.forEach((item) => {
         if (item.kind === 'rent') {
           rentPayments.recordPayment(item.refId, {
@@ -143,11 +144,9 @@ export default function PayBill() {
             orNumber: manualRef.trim(),
           });
         } else if (item.kind === 'utility') {
-          // Utility charges only have paid/unpaid — mark paid on approval later
-          // For demo, store pending flag
+          utilityCharges.markPaid(item.refId);
         }
       });
-      // For now, navigate to a placeholder receipt
       clearProof();
       navigate('/tenant');
     } catch (err) {
@@ -173,7 +172,10 @@ export default function PayBill() {
         </div>
         <h1 className="text-2xl font-bold text-slate-900">All paid up! 🎉</h1>
         <p className="text-sm text-slate-600 mt-2">You have no unpaid bills.</p>
-        <button onClick={() => navigate('/tenant')} className="btn-secondary mt-6">
+        <button
+          onClick={() => navigate('/tenant')}
+          className="btn-secondary mt-6"
+        >
           <ArrowLeft size={16} className="mr-2" /> Back to Dashboard
         </button>
       </div>
@@ -183,7 +185,9 @@ export default function PayBill() {
   return (
     <div className="max-w-2xl mx-auto pb-8">
       <div className="mb-5">
-        <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">Pay Rent</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
+          Pay Rent
+        </h1>
         <p className="text-slate-600 text-sm mt-1">
           Two steps. Pay via GCash/Bank, then upload your receipt.
         </p>
@@ -191,7 +195,11 @@ export default function PayBill() {
 
       <div className="flex items-center gap-2 mb-6">
         <StepPill n={1} label="Choose Method" active={step === 1} done={step > 1} />
-        <div className={`flex-1 h-0.5 rounded-full ${step > 1 ? 'bg-violet-500' : 'bg-slate-200'}`} />
+        <div
+          className={`flex-1 h-0.5 rounded-full ${
+            step > 1 ? 'bg-violet-500' : 'bg-slate-200'
+          }`}
+        />
         <StepPill n={2} label="Upload Receipt" active={step === 2} done={false} />
       </div>
 
@@ -221,17 +229,25 @@ export default function PayBill() {
                       key={b.id}
                       onClick={() => toggleItem(b.id)}
                       className={`w-full text-left rounded-xl border p-3 transition ${
-                        isSel ? 'border-violet-500 bg-violet-50' : 'border-slate-200 bg-white hover:bg-slate-50'
+                        isSel
+                          ? 'border-violet-500 bg-violet-50'
+                          : 'border-slate-200 bg-white hover:bg-slate-50'
                       }`}
                     >
                       <div className="flex items-center justify-between gap-3">
                         <div>
                           <p className="font-semibold text-slate-900">{b.label}</p>
-                          <p className="text-xs text-slate-500">₱{b.amount.toLocaleString('en-PH')}</p>
+                          <p className="text-xs text-slate-500">
+                            ₱{b.amount.toLocaleString('en-PH')}
+                          </p>
                         </div>
-                        <div className={`w-5 h-5 rounded-full border-2 ${
-                          isSel ? 'bg-violet-600 border-violet-600' : 'border-slate-300'
-                        }`} />
+                        <div
+                          className={`w-5 h-5 rounded-full border-2 ${
+                            isSel
+                              ? 'bg-violet-600 border-violet-600'
+                              : 'border-slate-300'
+                          }`}
+                        />
                       </div>
                     </button>
                   );
@@ -240,7 +256,9 @@ export default function PayBill() {
             </div>
 
             <div className="card">
-              <h2 className="font-bold text-slate-900 mb-3">Choose payment method</h2>
+              <h2 className="font-bold text-slate-900 mb-3">
+                Choose payment method
+              </h2>
               <div className="space-y-3">
                 {PAYMENT_METHODS.map((m) => (
                   <button
@@ -249,7 +267,9 @@ export default function PayBill() {
                     className="w-full rounded-2xl border border-slate-200 bg-white p-4 text-left hover:border-violet-300 transition"
                   >
                     <div className="flex items-center gap-3">
-                      <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${m.grad} flex items-center justify-center text-2xl`}>
+                      <div
+                        className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${m.grad} flex items-center justify-center text-2xl`}
+                      >
                         {m.emoji}
                       </div>
                       <div>
@@ -275,39 +295,87 @@ export default function PayBill() {
             <div className="card">
               <div className="flex items-center justify-between mb-3">
                 <h2 className="font-bold text-slate-900">Payment details</h2>
-                <button onClick={handleBack} className="text-xs font-medium text-slate-500 hover:text-slate-700">Back</button>
+                <button
+                  onClick={handleBack}
+                  className="text-xs font-medium text-slate-500 hover:text-slate-700"
+                >
+                  Back
+                </button>
               </div>
 
               {activeAccount && (
                 <div className="rounded-2xl bg-slate-50 border border-slate-200 p-4 space-y-3 mb-4">
                   <div className="flex items-center gap-2 text-sm font-semibold text-slate-700">
-                    <Smartphone size={16} /> {method === 'gcash' ? 'GCash' : 'Bank'} account
+                    <Smartphone size={16} />{' '}
+                    {method === 'gcash' ? 'GCash' : 'Bank'} account
                   </div>
                   <div className="space-y-2 text-sm">
+                    {/* GCash uses accountName / phone, Bank uses accountName / accountNumber */}
                     <div className="flex items-center justify-between gap-3">
                       <span className="text-slate-500">Name</span>
-                      <span className="font-semibold text-slate-900">{activeAccount.name}</span>
+                      <span className="font-semibold text-slate-900">
+                        {activeAccount.accountName || '—'}
+                      </span>
                     </div>
                     <div className="flex items-center justify-between gap-3">
-                      <span className="text-slate-500">Number</span>
+                      <span className="text-slate-500">
+                        {method === 'gcash' ? 'Number' : 'Account No.'}
+                      </span>
                       <div className="flex items-center gap-2">
-                        <span className="font-mono text-slate-900">{activeAccount.number}</span>
-                        <button onClick={() => copyToClipboard(activeAccount.number, 'number')} className="p-1 rounded-md hover:bg-slate-200">
-                          {copiedField === 'number' ? <Check size={14} className="text-emerald-600" /> : <Copy size={14} className="text-slate-500" />}
+                        <span className="font-mono text-slate-900">
+                          {method === 'gcash'
+                            ? activeAccount.phone || '—'
+                            : activeAccount.accountNumber || '—'}
+                        </span>
+                        <button
+                          onClick={() =>
+                            copyToClipboard(
+                              method === 'gcash'
+                                ? activeAccount.phone
+                                : activeAccount.accountNumber,
+                              'number'
+                            )
+                          }
+                          className="p-1 rounded-md hover:bg-slate-200"
+                        >
+                          {copiedField === 'number' ? (
+                            <Check size={14} className="text-emerald-600" />
+                          ) : (
+                            <Copy size={14} className="text-slate-500" />
+                          )}
                         </button>
                       </div>
                     </div>
+                    {method === 'bank' && activeAccount.bankName && (
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="text-slate-500">Bank</span>
+                        <span className="font-semibold text-slate-900">
+                          {activeAccount.bankName}
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
 
               <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-4">
-                <input ref={fileInputRef} type="file" accept="image/*" onChange={handleOCRUpload} className="hidden" />
-                <button onClick={() => fileInputRef.current?.click()} className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-left hover:border-violet-300 transition">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleOCRUpload}
+                  className="hidden"
+                />
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-left hover:border-violet-300 transition"
+                >
                   <div className="flex items-center justify-between gap-3">
                     <div>
                       <p className="font-semibold text-slate-900">Upload receipt</p>
-                      <p className="text-xs text-slate-500">PNG/JPG screenshot or photo</p>
+                      <p className="text-xs text-slate-500">
+                        PNG/JPG screenshot or photo
+                      </p>
                     </div>
                     <div className="p-2 rounded-xl bg-violet-100 text-violet-600">
                       <Upload size={18} />
@@ -317,13 +385,18 @@ export default function PayBill() {
 
                 {ocrLoading && (
                   <div className="mt-3 flex items-center text-sm text-slate-500">
-                    <Loader2 size={16} className="animate-spin mr-2" /> Reading receipt…
+                    <Loader2 size={16} className="animate-spin mr-2" /> Reading
+                    receipt…
                   </div>
                 )}
 
                 {ocrPreview && (
                   <div className="mt-4 rounded-xl overflow-hidden border border-slate-200 bg-white">
-                    <img src={ocrPreview} alt="Receipt preview" className="w-full h-52 object-cover" />
+                    <img
+                      src={ocrPreview}
+                      alt="Receipt preview"
+                      className="w-full h-52 object-cover"
+                    />
                   </div>
                 )}
               </div>
@@ -331,19 +404,38 @@ export default function PayBill() {
               <div className="mt-4 space-y-3">
                 <div>
                   <label className="label">Reference number</label>
-                  <input value={manualRef} onChange={(e) => setManualRef(e.target.value)} className="input" placeholder="Enter reference number" />
+                  <input
+                    value={manualRef}
+                    onChange={(e) => setManualRef(e.target.value)}
+                    className="input"
+                    placeholder="Enter reference number"
+                  />
                 </div>
                 <div>
                   <label className="label">Amount paid</label>
-                  <input value={manualAmount} onChange={(e) => setManualAmount(e.target.value)} className="input" placeholder="Amount sent" />
+                  <input
+                    value={manualAmount}
+                    onChange={(e) => setManualAmount(e.target.value)}
+                    className="input"
+                    placeholder="Amount sent"
+                  />
                 </div>
                 {ocrText && (
                   <div className="rounded-xl bg-slate-50 border border-slate-200 p-3">
                     <div className="flex items-center justify-between mb-2">
-                      <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Detected text</p>
-                      <button onClick={() => copyToClipboard(ocrText, 'ocr')} className="text-[11px] text-violet-600 font-medium">Copy</button>
+                      <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                        Detected text
+                      </p>
+                      <button
+                        onClick={() => copyToClipboard(ocrText, 'ocr')}
+                        className="text-[11px] text-violet-600 font-medium"
+                      >
+                        Copy
+                      </button>
                     </div>
-                    <pre className="text-[11px] leading-5 text-slate-600 whitespace-pre-wrap max-h-32 overflow-auto">{ocrText}</pre>
+                    <pre className="text-[11px] leading-5 text-slate-600 whitespace-pre-wrap max-h-32 overflow-auto">
+                      {ocrText}
+                    </pre>
                   </div>
                 )}
               </div>
@@ -352,9 +444,15 @@ export default function PayBill() {
             <div className="card">
               <div className="flex items-center justify-between text-sm text-slate-600 mb-2">
                 <span>Selected bills total</span>
-                <span className="font-bold text-slate-900">₱{total.toLocaleString('en-PH')}</span>
+                <span className="font-bold text-slate-900">
+                  ₱{total.toLocaleString('en-PH')}
+                </span>
               </div>
-              <button onClick={handleSubmit} disabled={submitting} className="btn-primary w-full">
+              <button
+                onClick={handleSubmit}
+                disabled={submitting}
+                className="btn-primary w-full"
+              >
                 {submitting ? 'Submitting…' : 'Submit Payment'}
               </button>
             </div>
@@ -367,12 +465,26 @@ export default function PayBill() {
 
 function StepPill({ n, label, active, done }) {
   return (
-    <div className={`flex items-center gap-2 px-3 py-2 rounded-full border text-xs font-semibold ${
-      active ? 'border-violet-500 bg-violet-50 text-violet-700' : done ? 'border-emerald-500 bg-emerald-50 text-emerald-700' : 'border-slate-200 bg-white text-slate-500'
-    }`}>
-      <span className={`w-5 h-5 rounded-full text-[10px] flex items-center justify-center ${
-        active ? 'bg-violet-600 text-white' : done ? 'bg-emerald-600 text-white' : 'bg-slate-200 text-slate-600'
-      }`}>{n}</span>
+    <div
+      className={`flex items-center gap-2 px-3 py-2 rounded-full border text-xs font-semibold ${
+        active
+          ? 'border-violet-500 bg-violet-50 text-violet-700'
+          : done
+          ? 'border-emerald-500 bg-emerald-50 text-emerald-700'
+          : 'border-slate-200 bg-white text-slate-500'
+      }`}
+    >
+      <span
+        className={`w-5 h-5 rounded-full text-[10px] flex items-center justify-center ${
+          active
+            ? 'bg-violet-600 text-white'
+            : done
+            ? 'bg-emerald-600 text-white'
+            : 'bg-slate-200 text-slate-600'
+        }`}
+      >
+        {n}
+      </span>
       {label}
     </div>
   );

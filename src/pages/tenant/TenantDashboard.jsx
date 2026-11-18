@@ -1,37 +1,67 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Wallet, Calendar, ArrowRight, Home, Receipt } from 'lucide-react';
+import {
+  Wallet, Calendar, ArrowRight, Home, Receipt, Clock,
+  CheckCircle2, XCircle, UserCheck, MessageSquare
+} from 'lucide-react';
 import { motion } from 'framer-motion';
 import StatusBadge from '../../components/StatusBadge';
 import { useAuth } from '../../context/AuthContext';
-import { rentPayments, utilityCharges, rooms } from '../../services/localDB';
+import { rentPayments, utilityCharges, rooms, tenants, reservations } from '../../services/localDB';
 
 export default function TenantDashboard() {
   const { user } = useAuth();
+  const navigate = useNavigate();
+
   const [rents, setRents] = useState([]);
   const [utilities, setUtilities] = useState([]);
   const [room, setRoom] = useState(null);
-  const navigate = useNavigate();
+  const [myInquiries, setMyInquiries] = useState([]);
 
   useEffect(() => {
+    // Rent & utility bills for this tenant
     setRents(rentPayments.listForTenant(user.id));
     setUtilities(utilityCharges.listForTenant(user.id));
 
-    // Find tenant's room
+    // Find the tenant's room from the tenants list
     const allRooms = rooms.list();
-    // The tenant record includes roomId — find it via localStorage scan
-    const tenantList = JSON.parse(localStorage.getItem('nb_tenants') || '[]');
-    const me = tenantList.find((t) => t.id === user.id);
-    if (me?.roomId) setRoom(allRooms.find((r) => r.id === me.roomId));
-  }, [user.id]);
+    const allTenants = tenants.list();
+    const me = allTenants.find((t) => t.id === user.id);
+    if (me?.roomId) {
+      setRoom(allRooms.find((r) => r.id === me.roomId) || null);
+    }
+
+    // NEW: Fetch this tenant's inquiries (match by email or fullName)
+    const allInquiries = reservations.list();
+    const mine = allInquiries.filter(
+      (i) =>
+        (i.email && i.email.toLowerCase() === (user.email || '').toLowerCase()) ||
+        (i.fullName && i.fullName.toLowerCase() === (user.name || '').toLowerCase())
+    );
+    setMyInquiries(mine);
+  }, [user.id, user.email, user.name]);
 
   const totalRentDue = rents.reduce((s, r) => s + r.balance, 0);
-  const totalUtilDue = utilities.filter((u) => u.status === 'unpaid').reduce((s, u) => s + u.amountBilled, 0);
+  const totalUtilDue = utilities
+    .filter((u) => u.status === 'unpaid')
+    .reduce((s, u) => s + u.amountBilled, 0);
   const totalDue = totalRentDue + totalUtilDue;
+
+  const unpaidCount =
+    rents.filter((r) => r.status !== 'paid').length +
+    utilities.filter((u) => u.status === 'unpaid').length;
+
+  // Latest inquiry (most recent)
+  const latestInquiry = myInquiries[0];
 
   return (
     <div>
-      <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="card-gradient mb-5">
+      {/* ── Welcome ── */}
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="card-gradient mb-5"
+      >
         <div className="flex items-start justify-between">
           <div>
             <p className="text-slate-600 text-sm">Welcome back 👋</p>
@@ -47,6 +77,62 @@ export default function TenantDashboard() {
         </div>
       </motion.div>
 
+      {/* ── Inquiry Status Banner (NEW - Step 3 feedback) ── */}
+      {latestInquiry && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className={`mb-5 rounded-2xl p-4 border ${
+            latestInquiry.status === 'qualified'
+              ? 'bg-emerald-50 border-emerald-200'
+              : latestInquiry.status === 'not_qualified'
+              ? 'bg-rose-50 border-rose-200'
+              : 'bg-amber-50 border-amber-200'
+          }`}
+        >
+          <div className="flex items-start gap-3">
+            <div
+              className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+                latestInquiry.status === 'qualified'
+                  ? 'bg-emerald-100 text-emerald-600'
+                  : latestInquiry.status === 'not_qualified'
+                  ? 'bg-rose-100 text-rose-600'
+                  : 'bg-amber-100 text-amber-600'
+              }`}
+            >
+              {latestInquiry.status === 'qualified' ? (
+                <UserCheck size={20} />
+              ) : latestInquiry.status === 'not_qualified' ? (
+                <XCircle size={20} />
+              ) : (
+                <Clock size={20} />
+              )}
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center justify-between gap-2">
+                <p className="font-bold text-slate-900 text-sm">
+                  Inquiry {latestInquiry.reference}
+                </p>
+                <StatusBadge status={latestInquiry.status} />
+              </div>
+              <p className="text-xs text-slate-600 mt-1">
+                {latestInquiry.status === 'qualified'
+                  ? "Good news! Your inquiry is qualified. We'll contact you for the next steps."
+                  : latestInquiry.status === 'not_qualified'
+                  ? `Unfortunately, your inquiry was not qualified. ${
+                      latestInquiry.qualificationReason || ''
+                    }`
+                  : "Your inquiry is being reviewed by our staff. We'll update you soon."}
+              </p>
+              <p className="text-[11px] text-slate-500 mt-1">
+                Preferred: {latestInquiry.preferredRoomType} · Move-in: {latestInquiry.moveInDate}
+              </p>
+            </div>
+          </div>
+        </motion.div>
+      )}
+
+      {/* ── Stats ── */}
       <div className="grid grid-cols-2 gap-3 mb-5">
         <div className="card">
           <div className="flex items-center gap-2 mb-2">
@@ -55,7 +141,9 @@ export default function TenantDashboard() {
             </div>
             <p className="text-xs font-semibold text-slate-600 uppercase">Total Due</p>
           </div>
-          <p className="text-xl font-bold text-slate-900">₱{totalDue.toLocaleString('en-PH')}</p>
+          <p className="text-xl font-bold text-slate-900">
+            ₱{totalDue.toLocaleString('en-PH')}
+          </p>
         </div>
         <div className="card">
           <div className="flex items-center gap-2 mb-2">
@@ -64,12 +152,11 @@ export default function TenantDashboard() {
             </div>
             <p className="text-xs font-semibold text-slate-600 uppercase">Unpaid Bills</p>
           </div>
-          <p className="text-xl font-bold text-slate-900">
-            {rents.filter((r) => r.status !== 'paid').length + utilities.filter((u) => u.status === 'unpaid').length}
-          </p>
+          <p className="text-xl font-bold text-slate-900">{unpaidCount}</p>
         </div>
       </div>
 
+      {/* ── Pay CTA ── */}
       {totalDue > 0 && (
         <motion.button
           whileHover={{ scale: 1.01 }}
@@ -87,6 +174,40 @@ export default function TenantDashboard() {
         </motion.button>
       )}
 
+      {/* ── My Inquiries (all) ── */}
+      {myInquiries.length > 0 && (
+        <div className="mb-5">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
+              <MessageSquare size={16} className="text-indigo-600" /> My Inquiries
+            </h2>
+          </div>
+          <div className="space-y-2">
+            {myInquiries.map((inq) => (
+              <div key={inq.id} className="card !p-4">
+                <div className="flex items-start justify-between gap-2 mb-1">
+                  <div className="min-w-0">
+                    <p className="font-bold text-slate-900 text-sm font-mono truncate">
+                      {inq.reference}
+                    </p>
+                    <p className="text-xs text-slate-500">
+                      Prefers {inq.preferredRoomType} · Move-in {inq.moveInDate}
+                    </p>
+                  </div>
+                  <StatusBadge status={inq.status} />
+                </div>
+                {inq.status === 'not_qualified' && inq.qualificationReason && (
+                  <p className="text-xs text-rose-600 mt-1">
+                    Reason: {inq.qualificationReason}
+                  </p>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── Rent History ── */}
       <div className="mb-5">
         <h2 className="text-base font-bold text-slate-900 mb-3">Rent History</h2>
         {rents.length === 0 ? (
@@ -112,8 +233,12 @@ export default function TenantDashboard() {
                   <StatusBadge status={r.status} />
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-slate-600">Paid: ₱{r.amountPaid.toLocaleString('en-PH')}</span>
-                  <span className="text-slate-900 font-bold">₱{r.amountDue.toLocaleString('en-PH')}</span>
+                  <span className="text-slate-600">
+                    Paid: ₱{r.amountPaid.toLocaleString('en-PH')}
+                  </span>
+                  <span className="text-slate-900 font-bold">
+                    ₱{r.amountDue.toLocaleString('en-PH')}
+                  </span>
                 </div>
               </motion.div>
             ))}
@@ -121,6 +246,7 @@ export default function TenantDashboard() {
         )}
       </div>
 
+      {/* ── Utility Charges ── */}
       <div>
         <h2 className="text-base font-bold text-slate-900 mb-3">Utility Charges</h2>
         {utilities.length === 0 ? (
@@ -140,12 +266,16 @@ export default function TenantDashboard() {
               >
                 <div className="flex items-start justify-between mb-2">
                   <div>
-                    <p className="font-bold text-slate-900 capitalize text-sm">{u.chargeType}</p>
+                    <p className="font-bold text-slate-900 capitalize text-sm">
+                      {u.chargeType}
+                    </p>
                     <p className="text-xs text-slate-500">{u.billingPeriod}</p>
                   </div>
                   <StatusBadge status={u.status} />
                 </div>
-                <p className="text-lg font-bold text-slate-900">₱{u.amountBilled.toLocaleString('en-PH')}</p>
+                <p className="text-lg font-bold text-slate-900">
+                  ₱{u.amountBilled.toLocaleString('en-PH')}
+                </p>
               </motion.div>
             ))}
           </div>

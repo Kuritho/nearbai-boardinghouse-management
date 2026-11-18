@@ -2,17 +2,21 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import {
   MapPin, Building2, DoorOpen, ArrowLeft, ArrowRight, Heart,
+  MessageSquare, Send, Loader2, AlertTriangle, CalendarDays, X
 } from 'lucide-react';
 import PublicNavbar from './PublicNavbar';
 import BedPicker from './BedPicker';
 import PoliciesModal from './PoliciesModal';
-import { houses, rooms, bookings, favorites } from '../../services/localDB';
+import Modal from '../../components/Modal';
+import { useToast } from '../../components/Toast';
+import { houses, rooms, bookings, favorites, reservations } from '../../services/localDB';
 import { useAuth } from '../../context/AuthContext';
 
 export default function PropertyDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const toast = useToast();
 
   const [house, setHouse] = useState(null);
   const [roomList, setRoomList] = useState([]);
@@ -24,6 +28,16 @@ export default function PropertyDetail() {
   const [showPolicies, setShowPolicies] = useState(false);
   const [error, setError] = useState('');
 
+  // ── NEW: Inquiry modal state ──
+  const [showInquiry, setShowInquiry] = useState(false);
+  const [inquiryRoom, setInquiryRoom] = useState(null);
+  const [fullName, setFullName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [email, setEmail] = useState('');
+  const [preferredType, setPreferredType] = useState('Male');
+  const [inqMoveIn, setInqMoveIn] = useState('');
+  const [savingInquiry, setSavingInquiry] = useState(false);
+
   useEffect(() => {
     const h = houses.get(id);
     if (!h) {
@@ -33,6 +47,14 @@ export default function PropertyDetail() {
     setHouse(h);
     setRoomList(rooms.list(id));
   }, [id, navigate]);
+
+  // Prefill inquiry form with logged-in user details
+  useEffect(() => {
+    if (user) {
+      setFullName(user.name || '');
+      setEmail(user.email || '');
+    }
+  }, [user]);
 
   const handleBook = () => {
     if (!user) {
@@ -65,6 +87,47 @@ export default function PropertyDetail() {
     if (!user) return;
     favorites.toggle(user.id, id);
     setHouse({ ...house });
+  };
+
+  // ── NEW: Open inquiry modal for a FULL room ──
+  const openInquiry = (room) => {
+    setInquiryRoom(room);
+    setPreferredType(room.gender === 'female' ? 'Female' : 'Male');
+    setInqMoveIn(new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0]);
+    if (!user) {
+      setFullName('');
+      setEmail('');
+    }
+    setShowInquiry(true);
+  };
+
+  // ── NEW: Submit the inquiry ──
+  const handleSubmitInquiry = (e) => {
+    e.preventDefault();
+    if (!user) {
+      navigate('/login?redirect=' + encodeURIComponent(`/browse/${id}`));
+      return;
+    }
+    setSavingInquiry(true);
+    try {
+      const res = reservations.create({
+        houseId: house.id,
+        roomId: inquiryRoom?.id,
+        fullName,
+        phone,
+        email,
+        moveInDate: inqMoveIn,
+        preferredRoomType: preferredType,
+        notes: 'Submitted via Property Detail page (room full).',
+      });
+      setShowInquiry(false);
+      toast(`Inquiry ${res.reference} submitted! We'll review your rental readiness.`, 'success');
+      navigate(`/reserve/success/${res.reference}`);
+    } catch (err) {
+      toast(err.message, 'error');
+    } finally {
+      setSavingInquiry(false);
+    }
   };
 
   if (!house) return <div className="p-8">Loading…</div>;
@@ -142,18 +205,14 @@ export default function PropertyDetail() {
                   {roomList.map((r) => {
                     const taken = bookings.takenBeds(r.id);
                     const available = r.bedCapacity - r.occupants - taken.length;
+                    const isFull = available <= 0;
                     return (
-                      <button
+                      <div
                         key={r.id}
-                        onClick={() => {
-                          setSelectedRoom(r);
-                          setSelectedBed(null);
-                          setError('');
-                        }}
-                        className={`w-full flex items-center gap-3 p-3 rounded-xl border-2 text-left transition ${
-                          selectedRoom?.id === r.id
+                        className={`w-full flex items-center gap-3 p-3 rounded-xl border-2 transition ${
+                          !isFull && selectedRoom?.id === r.id
                             ? 'border-indigo-500 bg-indigo-50'
-                            : 'border-slate-200 hover:border-indigo-300'
+                            : 'border-slate-200'
                         }`}
                       >
                         {/* Room thumbnail */}
@@ -176,28 +235,51 @@ export default function PropertyDetail() {
                           </p>
                           <p className="text-xs text-slate-500">
                             ₱{r.monthlyRate.toLocaleString('en-PH')}/mo ·{" "}
-                            {available} bed{available !== 1 ? 's' : ''} available
+                            {isFull ? 'No beds available' : `${available} bed${available !== 1 ? 's' : ''} available`}
                           </p>
                           <p className="text-[10px] text-slate-400 capitalize mt-0.5">
                             {r.gender === 'mixed' ? 'Mixed dorm' : `${r.gender} only`}
                           </p>
                         </div>
-                        {available === 0 && <span className="chip-rose text-xs">Full</span>}
-                      </button>
+
+                        {/* Action button: Inquire (full) or Select (open) */}
+                        {isFull ? (
+                          <button
+                            onClick={() => openInquiry(r)}
+                            className="btn-secondary !text-xs !py-2 !px-3 !min-h-0 shrink-0"
+                          >
+                            <MessageSquare size={12} className="mr-1" /> Inquire
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => {
+                              setSelectedRoom(r);
+                              setSelectedBed(null);
+                              setError('');
+                            }}
+                            className={`text-xs font-semibold px-3 py-2 rounded-lg transition shrink-0 ${
+                              selectedRoom?.id === r.id
+                                ? 'bg-indigo-600 text-white'
+                                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                            }`}
+                          >
+                            {selectedRoom?.id === r.id ? 'Selected' : 'Select'}
+                          </button>
+                        )}
+                      </div>
                     );
                   })}
                 </div>
               )}
             </div>
 
-            {/* Bed picker */}
+            {/* Bed picker (only if a non-full room is selected) */}
             {selectedRoom && (
               <div className="card">
                 <h2 className="font-bold text-slate-900 mb-3">
                   Select Your Bed in Room {selectedRoom.roomNumber}
                 </h2>
 
-                {/* Selected room photo (bigger view) */}
                 {selectedRoom.imageUrl && (
                   <div className="rounded-xl overflow-hidden mb-4">
                     <img
@@ -296,6 +378,123 @@ export default function PropertyDetail() {
         onAccept={confirmBooking}
         houseName={house.name}
       />
+
+      {/* ── NEW: Inquiry Modal (Step 2) ── */}
+      <Modal
+        isOpen={showInquiry}
+        onClose={() => setShowInquiry(false)}
+        title={`Inquire About Room ${inquiryRoom?.roomNumber || ''}`}
+      >
+        {!user ? (
+          <div className="text-center py-6">
+            <AlertTriangle size={32} className="mx-auto text-amber-500 mb-3" />
+            <p className="text-sm text-slate-600 mb-4">
+              Please log in or sign up to submit an inquiry.
+            </p>
+            <Link
+              to={'/login?redirect=' + encodeURIComponent(`/browse/${id}`)}
+              className="btn-primary w-full"
+            >
+              Log In / Sign Up
+            </Link>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmitInquiry} className="space-y-4">
+            <div className="bg-amber-50 border border-amber-100 rounded-xl p-3 flex items-start gap-2">
+              <AlertTriangle size={14} className="text-amber-600 mt-0.5 shrink-0" />
+              <p className="text-xs text-amber-800">
+                This room is currently <strong>full</strong>. Your inquiry will be reviewed and you'll be added to the waitlist if you are qualified.
+              </p>
+            </div>
+
+            <div>
+              <label className="label">Full Name</label>
+              <input
+                className="input"
+                required
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="label">Phone</label>
+                <input
+                  className="input"
+                  required
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder="09XX XXX XXXX"
+                />
+              </div>
+              <div>
+                <label className="label">Email</label>
+                <input
+                  className="input"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="label">Preferred Room Type</label>
+              <div className="grid grid-cols-2 gap-2">
+                {['Male', 'Female'].map((t) => (
+                  <button
+                    type="button"
+                    key={t}
+                    onClick={() => setPreferredType(t)}
+                    className={`p-3 rounded-xl border-2 text-sm font-semibold transition ${
+                      preferredType === t
+                        ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
+                        : 'border-slate-200 text-slate-600'
+                    }`}
+                  >
+                    {t}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <label className="label">
+                <CalendarDays size={12} className="inline mr-1" /> Preferred Move-in Date
+              </label>
+              <input
+                className="input"
+                type="date"
+                required
+                value={inqMoveIn}
+                onChange={(e) => setInqMoveIn(e.target.value)}
+              />
+            </div>
+
+            <div className="flex gap-3 pt-2 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setShowInquiry(false)}
+                className="btn-secondary flex-1"
+              >
+                <X size={16} /> Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={savingInquiry}
+                className="btn-primary flex-1"
+              >
+                {savingInquiry ? (
+                  <Loader2 className="animate-spin" size={16} />
+                ) : (
+                  <Send size={16} />
+                )}
+                Submit Inquiry
+              </button>
+            </div>
+          </form>
+        )}
+      </Modal>
     </div>
   );
 }

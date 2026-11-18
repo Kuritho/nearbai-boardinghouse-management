@@ -4,9 +4,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import {
   Mail, Lock, Eye, EyeOff, ArrowRight, Loader2, Sparkles,
-  ArrowLeft, ShieldCheck, Users, Building2,
+  ArrowLeft, ShieldCheck, Users, Building2, UserCog, Shield,
 } from 'lucide-react';
 import Logo from '../components/Logo';
+import { ADMIN_CREDENTIALS, CARETAKER_CREDENTIALS } from '../services/localDB';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -53,9 +54,10 @@ export default function Login() {
     }
   };
 
-  const quickFill = () => {
-    setEmail('admin@nearbai.ph');
-    setPassword('Admin123!');
+  const quickFill = (cred) => {
+    setEmail(cred.email);
+    setPassword(cred.password);
+    setError('');
   };
 
   return (
@@ -251,24 +253,56 @@ export default function Login() {
               </button>
             </form>
 
-            <div className="mt-8 p-4 rounded-2xl bg-slate-50 border border-slate-100">
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-1.5">
-                  <Sparkles size={12} className="text-indigo-500" />
-                  <p className="text-[10px] font-bold text-indigo-600 uppercase tracking-wider">
-                    Demo Access
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={quickFill}
-                  className="text-[10px] font-bold text-indigo-600 hover:text-indigo-700"
-                >
-                  Autofill →
-                </button>
+            {/* ─── DEMO ACCESS (Admin + Caretaker) ─── */}
+            <div className="mt-8 space-y-2">
+              <div className="flex items-center gap-1.5 mb-1">
+                <Sparkles size={12} className="text-indigo-500" />
+                <p className="text-[10px] font-bold text-indigo-600 uppercase tracking-wider">
+                  Demo Access
+                </p>
               </div>
-              <p className="text-xs text-slate-700 font-mono">admin@nearbai.ph</p>
-              <p className="text-xs text-slate-700 font-mono">Admin123!</p>
+
+              {/* Admin */}
+              <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
+                <div className="flex items-center justify-between mb-1.5">
+                  <div className="flex items-center gap-1.5">
+                    <Shield size={12} className="text-indigo-600" />
+                    <p className="text-[10px] font-bold text-slate-700 uppercase tracking-wider">
+                      Admin
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => quickFill(ADMIN_CREDENTIALS)}
+                    className="text-[10px] font-bold text-indigo-600 hover:text-indigo-700"
+                  >
+                    Autofill →
+                  </button>
+                </div>
+                <p className="text-xs text-slate-700 font-mono">{ADMIN_CREDENTIALS.email}</p>
+                <p className="text-xs text-slate-700 font-mono">{ADMIN_CREDENTIALS.password}</p>
+              </div>
+
+              {/* Caretaker */}
+              <div className="p-3 rounded-xl bg-amber-50 border border-amber-100">
+                <div className="flex items-center justify-between mb-1.5">
+                  <div className="flex items-center gap-1.5">
+                    <UserCog size={12} className="text-amber-600" />
+                    <p className="text-[10px] font-bold text-amber-800 uppercase tracking-wider">
+                      Caretaker
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => quickFill(CARETAKER_CREDENTIALS)}
+                    className="text-[10px] font-bold text-amber-600 hover:text-amber-700"
+                  >
+                    Autofill →
+                  </button>
+                </div>
+                <p className="text-xs text-slate-700 font-mono">{CARETAKER_CREDENTIALS.email}</p>
+                <p className="text-xs text-slate-700 font-mono">{CARETAKER_CREDENTIALS.password}</p>
+              </div>
             </div>
           </div>
 

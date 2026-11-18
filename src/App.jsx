@@ -17,7 +17,7 @@ import ReserveSuccess from './pages/public/ReserveSuccess';
 
 // ─── Admin pages ───
 import AdminDashboard from './pages/admin/AdminDashboard';
-import GlobalDashboard from './pages/admin/GlobalDashboard'; // <-- NEW
+import GlobalDashboard from './pages/admin/GlobalDashboard';
 import ManageProperties from './pages/admin/ManageProperties';
 import ManageRooms from './pages/admin/ManageRooms';
 import ManageTenants from './pages/admin/ManageTenants';
@@ -30,9 +30,11 @@ import Reports from './pages/admin/Reports';
 import PaymentSettings from './pages/admin/PaymentSettings';
 import ManageUsers from './pages/admin/ManageUsers';
 import Announcements from './pages/admin/Announcements';
+import SimulationDataset from './pages/admin/SimulationDataset'; // <-- NEW
 
 // ─── Caretaker ───
 import CaretakerDashboard from './pages/caretaker/CaretakerDashboard';
+import CaretakerAnnouncements from './pages/caretaker/CaretakerAnnouncements';
 
 // ─── Tenant ───
 import TenantDashboard from './pages/tenant/TenantDashboard';
@@ -41,22 +43,20 @@ import PaymentPending from './pages/tenant/PaymentPending';
 import Receipt from './pages/tenant/Receipt';
 import MyBookings from './pages/tenant/MyBookings';
 import Favorites from './pages/tenant/Favorites';
+import TenantAnnouncements from './pages/tenant/TenantAnnouncements';
 
-// ============================================================
-// IMPORT SANITY CHECK
-// ============================================================
 const PAGE_IMPORTS = {
   Login,
   LandingPage, BrowsePage, PropertyDetail, AboutPage, ContactPage,
   SignupPage, ReservePage, ReserveSuccess,
-  AdminDashboard, GlobalDashboard, // <-- NEW
+  AdminDashboard, GlobalDashboard,
   ManageProperties, ManageRooms, ManageTenants,
   Reservations, RentPayments, UtilityCharges, Expenses, Analytics,
-  Reports,
+  Reports, SimulationDataset,
   PaymentSettings, ManageUsers, Announcements,
-  CaretakerDashboard,
+  CaretakerDashboard, CaretakerAnnouncements,
   TenantDashboard, PayBill, PaymentPending, Receipt,
-  MyBookings, Favorites,
+  MyBookings, Favorites, TenantAnnouncements,
   Layout,
 };
 
@@ -77,20 +77,13 @@ const PAGE_IMPORTS = {
   }
 })();
 
-// ============================================================
-// ERROR BOUNDARY
-// ============================================================
 class ErrorBoundary extends Component {
   constructor(props) {
     super(props);
     this.state = { error: null };
   }
-  static getDerivedStateFromError(error) {
-    return { error };
-  }
-  componentDidCatch(error, errorInfo) {
-    console.error('🔥 Page render error:', error, errorInfo);
-  }
+  static getDerivedStateFromError(error) { return { error }; }
+  componentDidCatch(error, errorInfo) { console.error('🔥 Page render error:', error, errorInfo); }
   render() {
     if (this.state.error) {
       return (
@@ -100,12 +93,8 @@ class ErrorBoundary extends Component {
               <span className="text-rose-500 text-2xl">⚠️</span>
             </div>
             <h1 className="text-xl font-extrabold text-slate-900 mb-2">Something went wrong</h1>
-            <p className="text-sm text-slate-600 mb-4">
-              A page failed to load. Check the browser console for details.
-            </p>
-            <pre className="bg-slate-50 p-3 rounded-xl text-[10px] text-rose-700 overflow-auto max-h-40 whitespace-pre-wrap mb-4">
-              {String(this.state.error)}
-            </pre>
+            <p className="text-sm text-slate-600 mb-4">A page failed to load. Check the browser console for details.</p>
+            <pre className="bg-slate-50 p-3 rounded-xl text-[10px] text-rose-700 overflow-auto max-h-40 whitespace-pre-wrap mb-4">{String(this.state.error)}</pre>
             <div className="flex gap-2">
               <button onClick={() => window.location.reload()} className="btn-primary flex-1">Reload</button>
               <button onClick={() => { window.location.href = '/'; }} className="btn-secondary flex-1">Home</button>
@@ -118,9 +107,6 @@ class ErrorBoundary extends Component {
   }
 }
 
-// ============================================================
-// MISSING PAGE FALLBACK
-// ============================================================
 function MissingPage({ name }) {
   return (
     <div className="max-w-lg mx-auto my-16">
@@ -129,9 +115,7 @@ function MissingPage({ name }) {
           <span className="text-amber-500 text-3xl">🔧</span>
         </div>
         <h1 className="text-xl font-extrabold text-slate-900 mb-2">Page unavailable</h1>
-        <p className="text-sm text-slate-600 mb-4">
-          The <strong>{name}</strong> page hasn't been created yet.
-        </p>
+        <p className="text-sm text-slate-600 mb-4">The <strong>{name}</strong> page hasn't been created yet.</p>
         <button onClick={() => window.history.back()} className="btn-secondary mt-2">← Go back</button>
       </div>
     </div>
@@ -145,32 +129,17 @@ function Safe({ component: Comp, name, role }) {
   return element;
 }
 
-// ============================================================
-// AUTH GUARD
-// ============================================================
 function ProtectedRoute({ children, role }) {
   const { user, loading } = useAuth();
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center text-slate-500">
-        Loading…
-      </div>
-    );
-  }
+  if (loading) return <div className="min-h-screen flex items-center justify-center text-slate-500">Loading…</div>;
   if (!user) return <Navigate to="/login" replace />;
   if (role && user.role !== role) {
-    const redirect =
-      user.role === 'admin' ? '/admin'
-      : user.role === 'caretaker' ? '/caretaker'
-      : '/tenant';
+    const redirect = user.role === 'admin' ? '/admin' : user.role === 'caretaker' ? '/caretaker' : '/tenant';
     return <Navigate to={redirect} replace />;
   }
   return <Layout>{children}</Layout>;
 }
 
-// ============================================================
-// ROUTES
-// ============================================================
 function AppRoutes() {
   return (
     <Routes>
@@ -187,7 +156,7 @@ function AppRoutes() {
 
       {/* ============ ADMIN ============ */}
       <Route path="/admin" element={<Safe component={AdminDashboard} name="AdminDashboard" role="admin" />} />
-      <Route path="/admin/global" element={<Safe component={GlobalDashboard} name="GlobalDashboard" role="admin" />} /> {/* NEW */}
+      <Route path="/admin/global" element={<Safe component={GlobalDashboard} name="GlobalDashboard" role="admin" />} />
       <Route path="/admin/properties" element={<Safe component={ManageProperties} name="ManageProperties" role="admin" />} />
       <Route path="/admin/rooms" element={<Safe component={ManageRooms} name="ManageRooms" role="admin" />} />
       <Route path="/admin/tenants" element={<Safe component={ManageTenants} name="ManageTenants" role="admin" />} />
@@ -200,12 +169,14 @@ function AppRoutes() {
       <Route path="/admin/announcements" element={<Safe component={Announcements} name="Announcements" role="admin" />} />
       <Route path="/admin/settings" element={<Safe component={PaymentSettings} name="PaymentSettings" role="admin" />} />
       <Route path="/admin/users" element={<Safe component={ManageUsers} name="ManageUsers" role="admin" />} />
+      <Route path="/admin/simulation" element={<Safe component={SimulationDataset} name="SimulationDataset" role="admin" />} /> {/* <-- NEW */}
 
       {/* ============ CARETAKER ============ */}
       <Route path="/caretaker" element={<Safe component={CaretakerDashboard} name="CaretakerDashboard" role="caretaker" />} />
       <Route path="/caretaker/tenants" element={<Safe component={ManageTenants} name="ManageTenants" role="caretaker" />} />
       <Route path="/caretaker/reservations" element={<Safe component={Reservations} name="Reservations" role="caretaker" />} />
       <Route path="/caretaker/rent" element={<Safe component={RentPayments} name="RentPayments" role="caretaker" />} />
+      <Route path="/caretaker/announcements" element={<Safe component={CaretakerAnnouncements} name="CaretakerAnnouncements" role="caretaker" />} />
 
       {/* ============ TENANT ============ */}
       <Route path="/tenant" element={<Safe component={TenantDashboard} name="TenantDashboard" role="tenant" />} />
@@ -214,6 +185,7 @@ function AppRoutes() {
       <Route path="/tenant/pending/:id" element={<Safe component={PaymentPending} name="PaymentPending" role="tenant" />} />
       <Route path="/tenant/receipt/:id" element={<Safe component={Receipt} name="Receipt" role="tenant" />} />
       <Route path="/tenant/favorites" element={<Safe component={Favorites} name="Favorites" role="tenant" />} />
+      <Route path="/tenant/announcements" element={<Safe component={TenantAnnouncements} name="TenantAnnouncements" role="tenant" />} />
 
       {/* ============ FALLBACK ============ */}
       <Route path="*" element={<Navigate to="/" replace />} />
@@ -221,9 +193,6 @@ function AppRoutes() {
   );
 }
 
-// ============================================================
-// ROOT
-// ============================================================
 export default function App() {
   return (
     <ErrorBoundary>
