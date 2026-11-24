@@ -31,20 +31,38 @@ const write = (k, v) => localStorage.setItem(k, JSON.stringify(v));
 
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 
-// Helper to generate dates in November 2026
-const getDateInNov2026 = (day, hour = 10) => {
-  return new Date(2026, 10, day, hour, 0, 0).toISOString(); // Month 10 is November
+// ─── RANDOM NAME DATA ───
+const FIRST_NAMES = [
+  'Juan', 'Maria', 'Jose', 'Ana', 'Pedro', 'Rosa', 'Carlos', 'Lucia', 'Miguel', 'Sofia',
+  'Mark', 'Jane', 'Ryan', 'Grace', 'Paolo', 'Mika', 'Daniel', 'Angela', 'Rafael', 'Camille',
+  'Alex', 'Chloe', 'James', 'Patricia', 'Liam', 'Isabella', 'Gabriel', 'Bianca', 'Nico', 'Nicole',
+  'Kenneth', 'Trisha', 'Jomar', 'Kim', 'Aldrin', 'Shara', 'Renz', 'Alyssa', 'Jayson', 'Diana'
+];
+
+const LAST_NAMES = [
+  'Dela Cruz', 'Santos', 'Reyes', 'Cruz', 'Bautista', 'Garcia', 'Mendoza', 'Torres', 'Ramos', 'Villanueva',
+  'Aquino', 'Domingo', 'Navarro', 'Rivera', 'Rosales', 'Pascual', 'Aguilar', 'Castillo', 'Flores', 'Gonzales',
+  'Lopez', 'Perez', 'Tan', 'Lim', 'Sy', 'Ong', 'Chua', 'Uy', 'Co', 'Go'
+];
+
+const randomName = () => {
+  const first = FIRST_NAMES[Math.floor(Math.random() * FIRST_NAMES.length)];
+  const last = LAST_NAMES[Math.floor(Math.random() * LAST_NAMES.length)];
+  return `${first} ${last}`;
 };
 
-// Helper to generate a random PH phone number
+// ─── RANDOM HELPERS ───
+const getDateInNov2026 = (day, hour = 10) => {
+  return new Date(2026, 10, day, hour, 0, 0).toISOString();
+};
+
 const generatePhone = () => {
   const prefixes = ['0905', '0906', '0915', '0916', '0917', '0918', '0927', '0935', '0936', '0945', '0956', '0961', '0975', '0995'];
   const prefix = prefixes[Math.floor(Math.random() * prefixes.length)];
-  const suffix = Math.floor(Math.random() * 9000000) + 1000000; // 7-digit number
+  const suffix = Math.floor(Math.random() * 9000000) + 1000000;
   return `${prefix}${suffix}`;
 };
 
-// Helper to shuffle an array (Fisher-Yates)
 const shuffle = (array) => {
   const arr = [...array];
   for (let i = arr.length - 1; i > 0; i--) {
@@ -54,7 +72,6 @@ const shuffle = (array) => {
   return arr;
 };
 
-// Helper to get a random integer between min and max (inclusive)
 const randomInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
 
 export function seedDemoData() {
@@ -109,37 +126,39 @@ export function seedDemoData() {
   const getRoom = (num) => allRooms.find((r) => r.roomNumber === num);
 
   // ─── 3. Create Tenants (Match Table B occupancy) ───
+  // We remove the hardcoded names and just define which room they belong to
   const tenantsConfig = [
-    { room: 'M101', name: 'Tenant M01' },
-    { room: 'M101', name: 'Tenant M02' },
-    { room: 'M102', name: 'Tenant M03' },
-    { room: 'M102', name: 'Tenant M04' }, // Overdue
-    { room: 'M103', name: 'Tenant M05' },
-    { room: 'M103', name: 'Tenant M06' },
-    { room: 'M103', name: 'Tenant M07' },
-    { room: 'F101', name: 'Tenant F01' },
-    { room: 'F101', name: 'Tenant F02' },
-    { room: 'F101', name: 'Tenant F03' },
-    { room: 'F102', name: 'Tenant F04' },
-    { room: 'F102', name: 'Tenant F05' },
-    { room: 'F102', name: 'Tenant F06' }, // Overdue
-    { room: 'F103', name: 'Tenant F07' },
-    { room: 'F103', name: 'Tenant F08' },
-    { room: 'F103', name: 'Tenant F09' },
+    { room: 'M101' }, { room: 'M101' },
+    { room: 'M102' }, { room: 'M102' }, // M102 has 1 vacant
+    { room: 'M103' }, { room: 'M103' }, { room: 'M103' },
+    { room: 'F101' }, { room: 'F101' }, { room: 'F101' },
+    { room: 'F102' }, { room: 'F102' }, { room: 'F102' }, // F102 has 1 vacant
+    { room: 'F103' }, { room: 'F103' }, { room: 'F103' },
   ];
 
   const allTenants = [];
   const newUsers = [];
+  const usedEmails = new Set();
 
   tenantsConfig.forEach((t) => {
     const id = uid();
     const room = getRoom(t.room);
-    const email = `${t.name.replace(/\s/g, '').toLowerCase()}@example.com`;
+    const name = randomName();
+    
+    // Ensure email is unique even if names randomly generate the same
+    let email = `${name.replace(/\s/g, '').toLowerCase()}@example.com`;
+    let counter = 1;
+    while (usedEmails.has(email)) {
+      email = `${name.replace(/\s/g, '').toLowerCase()}${counter}@example.com`;
+      counter++;
+    }
+    usedEmails.add(email);
+
     const phone = generatePhone();
 
     newUsers.push({
       id,
-      name: t.name,
+      name,
       email,
       password: 'Tenant123!',
       role: 'tenant',
@@ -153,7 +172,7 @@ export function seedDemoData() {
 
     allTenants.push({
       id,
-      name: t.name,
+      name,
       email,
       phone,
       emergencyContact: `Contact Person - ${generatePhone()}`,
@@ -178,6 +197,10 @@ export function seedDemoData() {
     F103: { billed: 7500, collected: 7500 },
   };
 
+  // We iterate through rooms to assign the overdues accurately based on the total room stats
+  const m102Tenants = allTenants.filter(t => t.roomId === getRoom('M102').id);
+  const f102Tenants = allTenants.filter(t => t.roomId === getRoom('F102').id);
+
   allTenants.forEach((t) => {
     const room = allRooms.find((r) => r.id === t.roomId);
     const payInfo = rentPaymentMap[room.roomNumber];
@@ -185,10 +208,11 @@ export function seedDemoData() {
     let amountPaid = payInfo.collected;
     let note = '';
 
-    if (t.name === 'Tenant M04') {
+    // Make one tenant in M102 fully overdue, one in F102 partially overdue
+    if (room.roomNumber === 'M102' && t.id === m102Tenants[0].id) {
       amountPaid = 0;
       note = 'Unpaid rent';
-    } else if (t.name === 'Tenant F06') {
+    } else if (room.roomNumber === 'F102' && t.id === f102Tenants[0].id) {
       amountPaid = 1000;
       note = 'Partial payment';
     } else {
@@ -277,17 +301,26 @@ export function seedDemoData() {
 
   // ─── 7. Generate Inquiries / Reservations (Match Table G & H) ───
   const allReservations = [];
+  const usedInquiryEmails = new Set();
 
-  // Helper to generate an inquiry with a specific status
   const createInq = (week, idx, status, gender) => {
+    const name = randomName();
+    let email = `${name.replace(/\s/g, '').toLowerCase()}@gmail.com`;
+    let counter = 1;
+    while (usedInquiryEmails.has(email)) {
+      email = `${name.replace(/\s/g, '').toLowerCase()}${counter}@gmail.com`;
+      counter++;
+    }
+    usedInquiryEmails.add(email);
+
     return {
       id: uid(),
       reference: `NBR-W${week}${idx}`,
       houseId,
       roomId: allRooms[0].id,
-      fullName: `Inquirer ${status === 'pending' ? 'Pending' : 'Applicant'} W${week}-${idx}`,
+      fullName: name, // Real name
       phone: generatePhone(),
-      email: `w${week}-${idx}@example.com`,
+      email: email,
       moveInDate: '2026-12-01',
       preferredRoomType: gender,
       notes: '',
@@ -301,12 +334,6 @@ export function seedDemoData() {
     };
   };
 
-  // We must strictly maintain the totals from the adviser's image.
-  // Week 1: 5 Total (2 Qualified) -> 3 remaining for Pending / Not Qualified
-  // Week 2: 7 Total (3 Qualified) -> 4 remaining
-  // Week 3: 8 Total (4 Qualified) -> 4 remaining
-  // Week 4: 10 Total (6 Qualified) -> 4 remaining
-  
   const weeksData = [
     { week: 1, total: 5, qualified: 2, remainder: 3 },
     { week: 2, total: 7, qualified: 3, remainder: 4 },
@@ -315,27 +342,19 @@ export function seedDemoData() {
   ];
 
   weeksData.forEach(({ week, total, qualified, remainder }) => {
-    // Determine how many are pending vs not_qualified.
-    // Rule: Pending must be between 2 and 5.
-    // But Pending cannot exceed the remainder.
     let pendingCount = randomInt(2, 5);
-    if (pendingCount > remainder) {
-      pendingCount = remainder;
-    }
+    if (pendingCount > remainder) pendingCount = remainder;
     
     const notQualifiedCount = remainder - pendingCount;
 
-    // Create an array of statuses for this week
     const statuses = [
       ...Array(qualified).fill('qualified'),
       ...Array(pendingCount).fill('pending'),
       ...Array(notQualifiedCount).fill('not_qualified'),
     ];
 
-    // Shuffle the statuses so they are mixed up chronologically
     const shuffledStatuses = shuffle(statuses);
 
-    // Assign random genders (Male/Female) and create the records
     shuffledStatuses.forEach((status, idx) => {
       const gender = Math.random() > 0.5 ? 'Male' : 'Female';
       allReservations.push(createInq(week, idx + 1, status, gender));
